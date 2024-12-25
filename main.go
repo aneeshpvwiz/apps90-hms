@@ -3,6 +3,7 @@ package main
 import (
 	"apps90-hms/controllers"
 	"apps90-hms/initializers"
+	"apps90-hms/middlewares"
 
 	"github.com/gin-gonic/gin"
 )
@@ -14,6 +15,10 @@ func init() {
 
 func main() {
 	r := gin.Default()
+
+	r.POST("/register", controllers.CreateUser)
+	r.POST("/login", controllers.Login)
+	r.GET("/user/profile", middlewares.CheckAuth, controllers.GetUserProfile)
 	r.POST("/posts", controllers.PostsCreate)
 	r.GET("/posts", controllers.PostsList)
 	r.GET("/posts/:id", controllers.PostDetails)
