@@ -3,6 +3,7 @@ package controllers
 import (
 	"apps90-hms/initializers"
 	"apps90-hms/models"
+	"apps90-hms/schemas"
 	"net/http"
 	"os"
 	"time"
@@ -14,7 +15,7 @@ import (
 
 func CreateUser(c *gin.Context) {
 
-	var authInput models.AuthInput
+	var authInput schemas.AuthInput
 
 	if err := c.ShouldBindJSON(&authInput); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -48,7 +49,7 @@ func CreateUser(c *gin.Context) {
 
 func Login(c *gin.Context) {
 
-	var authInput models.AuthInput
+	var authInput schemas.AuthInput
 
 	if err := c.ShouldBindJSON(&authInput); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

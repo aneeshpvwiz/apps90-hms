@@ -24,6 +24,7 @@ func main() {
 	// Entity Urls
 
 	r.POST("/entity", controllers.CreateEntity)
+	r.POST("/entity/user", controllers.CreateUserEntity)
 
 	r.Run() // listen and serve on 0.0.0.0:3000
 }
