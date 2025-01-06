@@ -15,14 +15,15 @@ func init() {
 
 func main() {
 	r := gin.Default()
+	// Auth Urls
 
 	r.POST("/register", controllers.CreateUser)
 	r.POST("/login", controllers.Login)
 	r.GET("/user/profile", middlewares.CheckAuth, controllers.GetUserProfile)
-	r.POST("/posts", controllers.PostsCreate)
-	r.GET("/posts", controllers.PostsList)
-	r.GET("/posts/:id", controllers.PostDetails)
-	r.PUT("/posts/:id", controllers.PostUpdate)
-	r.DELETE("/posts/:id", controllers.PostDelete)
+
+	// Entity Urls
+
+	r.POST("/entity", controllers.CreateEntity)
+
 	r.Run() // listen and serve on 0.0.0.0:3000
 }
