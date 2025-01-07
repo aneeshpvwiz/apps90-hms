@@ -3,6 +3,7 @@ package main
 import (
 	"apps90-hms/controllers"
 	"apps90-hms/initializers"
+	"apps90-hms/loggers"
 	"apps90-hms/middlewares"
 
 	"github.com/gin-gonic/gin"
@@ -11,9 +12,19 @@ import (
 func init() {
 	initializers.LoadEnvVariables()
 	initializers.ConnectToDB()
+
 }
 
 func main() {
+	// Initialize the logger
+	loggers.InitLogger()
+
+	// Get the logger instance
+	log := loggers.GetLogger()
+
+	// Example usage
+	log.Info("Application started")
+
 	r := gin.Default()
 	// Auth Urls
 
