@@ -1,12 +1,9 @@
 package main
 
 import (
-	"apps90-hms/controllers"
 	"apps90-hms/initializers"
 	"apps90-hms/loggers"
-	"apps90-hms/middlewares"
-
-	"github.com/gin-gonic/gin"
+	"apps90-hms/routes"
 )
 
 func init() {
@@ -22,20 +19,9 @@ func main() {
 	// Get the logger instance
 	log := loggers.GetLogger()
 
-	// Example usage
 	log.Info("Application started")
 
-	r := gin.Default()
-	// Auth Urls
+	router := routes.InitRoutes()
 
-	r.POST("/register", controllers.CreateUser)
-	r.POST("/login", controllers.Login)
-	r.GET("/user/profile", middlewares.CheckAuth, controllers.GetUserProfile)
-
-	// Entity Urls
-
-	r.POST("/entity", controllers.CreateEntity)
-	r.POST("/entity/user", controllers.CreateUserEntity)
-
-	r.Run() // listen and serve on 0.0.0.0:3000
+	router.Run() // listen and serve on 0.0.0.0:3000
 }
