@@ -3,9 +3,10 @@ package main
 import (
 	"apps90-hms/controllers"
 	"apps90-hms/initializers"
-	"apps90-hms/loggers"
 	"apps90-hms/middlewares"
 	"apps90-hms/routes"
+
+	"apps90-hms/loggers"
 )
 
 func init() {
@@ -15,13 +16,10 @@ func init() {
 }
 
 func main() {
-	// Initialize the logger
-	loggers.InitLogger()
 
-	// Get the logger instance
-	log := loggers.GetLogger()
+	logger := loggers.InitializeLogger()
 
-	log.Info("Application started")
+	logger.Info("Application started")
 
 	router := routes.InitRoutes()
 
@@ -32,9 +30,9 @@ func main() {
 	router.GET("/user/:id", controllers.GetUserHandler)
 
 	// Start the server
-	log.Println("Starting server on :8080")
+	logger.Info("Starting server", "address", ":8080")
 	if err := router.Run(); err != nil {
-		log.Fatalf("Failed to start server: %v", err)
+		logger.Error("Failed to start server: %v", err)
 	}
 
 	//router.Run() // listen and serve on 0.0.0.0:3000

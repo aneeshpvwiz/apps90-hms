@@ -1,29 +1,23 @@
 package loggers
 
 import (
+	"log/slog"
 	"os"
-
-	"github.com/sirupsen/logrus"
+	"sync"
 )
 
-var Log *logrus.Logger
+// Declare a global logger instance and a mutex to ensure thread-safety
+var (
+	loggerInstance *slog.Logger
+	once           sync.Once
+)
 
-func InitLogger() {
-	Log = logrus.New()
-
-	// Set log level
-	Log.SetLevel(logrus.InfoLevel)
-
-	// Set log output (e.g., file or standard output)
-	Log.SetOutput(os.Stdout)
-
-	// Set log format (e.g., JSON format)
-	Log.SetFormatter(&logrus.JSONFormatter{})
-}
-
-func GetLogger() *logrus.Logger {
-	if Log == nil {
-		InitLogger()
-	}
-	return Log
+// InitializeLogger initializes and returns a singleton logger with a JSON handler
+func InitializeLogger() *slog.Logger {
+	// Use sync.Once to ensure the logger is created only once
+	once.Do(func() {
+		// Create the logger only if it hasn't been created yet
+		loggerInstance = slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	})
+	return loggerInstance
 }
