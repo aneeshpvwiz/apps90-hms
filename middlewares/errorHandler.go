@@ -1,45 +1,32 @@
 package middlewares
 
 import (
-	"errors"
-	"fmt"
+	"apps90-hms/models"
+	"log"
 
 	"github.com/gin-gonic/gin"
 )
-
-// Custom error definitions
-var (
-	ErrUserNotFound   = errors.New("user not found")
-	ErrDatabaseFailed = errors.New("database connection failed")
-)
-
-// APIError represents a structured error for API responses
-type APIError struct {
-	StatusCode int    `json:"-"`
-	Message    string `json:"message"`
-	Details    string `json:"details,omitempty"`
-}
-
-// Implement the error interface for APIError
-func (e APIError) Error() string {
-	return fmt.Sprintf("%s: %s", e.Message, e.Details)
-}
 
 // APIErrorMiddleware handles API errors consistently
 func APIErrorMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Next() // Process the request
 
-		// Handle errors captured during request processing
+		// Check for errors in the Gin context
 		for _, ginErr := range c.Errors {
-			if apiErr, ok := ginErr.Err.(APIError); ok {
+			if apiErr, ok := ginErr.Err.(models.APIError); ok {
 				// Send a structured error response
 				c.JSON(apiErr.StatusCode, gin.H{
-					"error":   apiErr.Message,
-					"details": apiErr.Details,
+					"code":    apiErr.StatusCode,
+					"error":   apiErr.ErrorType,
+					"details": apiErr.Message,
 				})
+				// Stop further processing
 				return
 			}
 		}
+
+		// Debug log if no errors
+		log.Println("No errors captured by middleware")
 	}
 }
