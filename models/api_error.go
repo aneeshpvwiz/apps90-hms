@@ -11,14 +11,14 @@ type APIError struct {
 
 // Implement the error interface for APIError
 func (e APIError) Error() string {
-	return fmt.Sprintf("%s: %s", e.Message, e.Message)
+	return fmt.Sprintf("%s", e.Message)
 }
 
 // WrapError wraps an error with additional context
-func WrapError(statusCode int, err error, message string, details string) APIError {
+func WrapError(statusCode int, err error, message string) APIError {
 	return APIError{
 		StatusCode: statusCode,
-		Message:    fmt.Sprintf("%s: %s", message, details),
+		Message:    message,
 		ErrorType:  err.Error(),
 	}
 }
