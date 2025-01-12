@@ -1,11 +1,11 @@
 package controllers
 
 import (
+	"apps90-hms/errors"
 	"apps90-hms/initializers"
 	"apps90-hms/loggers"
 	"apps90-hms/models"
 	"apps90-hms/schemas"
-	"errors"
 	"net/http"
 	"os"
 	"time"
@@ -13,10 +13,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
 	"golang.org/x/crypto/bcrypt"
-)
-
-var (
-	ErrUserExists = errors.New("User exist")
 )
 
 func CreateUser(c *gin.Context) {
@@ -37,8 +33,7 @@ func CreateUser(c *gin.Context) {
 
 	if userFound.ID != 0 {
 		logger.Warn("User with this email already exists", "email", authInput.Email)
-		wrappedError := models.WrapError(http.StatusConflict, ErrUserExists, "User with this email already exists")
-		c.JSON(http.StatusConflict, gin.H{"error": wrappedError.Error()})
+		c.Error(models.WrapError(http.StatusBadRequest, errors.ErrUserExists, "Email already registered: "+authInput.Email))
 		return
 
 	}

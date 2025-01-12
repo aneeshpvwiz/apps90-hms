@@ -1,15 +1,18 @@
 package routes
 
 import (
+	"apps90-hms/middlewares"
+
 	"github.com/gin-gonic/gin"
 )
 
 func InitRoutes() *gin.Engine {
-	r := gin.Default()
+	router := gin.Default()
+	router.Use(middlewares.APIErrorMiddleware())
 
 	// Register routes
-	AuthRoutes(r)
-	EntityRoutes(r)
+	AuthRoutes(router)
+	EntityRoutes(router)
 
-	return r
+	return router
 }

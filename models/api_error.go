@@ -1,12 +1,14 @@
 package models
 
-import "fmt"
+import (
+	"fmt"
+)
 
 // APIError represents a structured error for API responses
 type APIError struct {
 	StatusCode int    `json:"-"`
-	Message    string `json:"message"`
 	ErrorType  string `json:"details,omitempty"`
+	Message    string `json:"message"`
 }
 
 // Implement the error interface for APIError
@@ -18,7 +20,7 @@ func (e APIError) Error() string {
 func WrapError(statusCode int, err error, message string) APIError {
 	return APIError{
 		StatusCode: statusCode,
-		Message:    message,
 		ErrorType:  err.Error(),
+		Message:    message,
 	}
 }

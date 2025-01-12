@@ -2,7 +2,6 @@ package main
 
 import (
 	"apps90-hms/initializers"
-	"apps90-hms/middlewares"
 	"apps90-hms/routes"
 
 	"apps90-hms/loggers"
@@ -23,7 +22,7 @@ func main() {
 	router := routes.InitRoutes()
 
 	// Use the custom error-handling middleware
-	router.Use(middlewares.APIErrorMiddleware())
+	//router.Use(middlewares.APIErrorMiddleware())
 
 	// Start the server
 	logger.Info("Starting server", "address", ":8080")
