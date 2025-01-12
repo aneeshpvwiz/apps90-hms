@@ -24,7 +24,7 @@ func CreateUser(c *gin.Context) {
 
 	if err := c.ShouldBindJSON(&authInput); err != nil {
 		logger.Error("Error binding JSON for CreateUser", "error", err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.Error(models.WrapError(http.StatusBadRequest, errors.ErrBindingJSON, "Invalid request format"))
 		return
 	}
 
@@ -41,7 +41,7 @@ func CreateUser(c *gin.Context) {
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte(authInput.Password), bcrypt.DefaultCost)
 	if err != nil {
 		logger.Error("Error generating password hash", "error", err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.Error(models.WrapError(http.StatusBadRequest, errors.ErrHashingPassword, "Password hashing error"))
 		return
 	}
 
@@ -67,7 +67,7 @@ func Login(c *gin.Context) {
 
 	if err := c.ShouldBindJSON(&authInput); err != nil {
 		logger.Error("Error binding JSON for Login", "error", err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.Error(models.WrapError(http.StatusBadRequest, errors.ErrBindingJSON, "Invalid request format"))
 		return
 	}
 
@@ -76,13 +76,13 @@ func Login(c *gin.Context) {
 
 	if userFound.ID == 0 {
 		logger.Warn("User not found", "email", authInput.Email)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "user not found"})
+		c.Error(models.WrapError(http.StatusNotFound, errors.ErrUserNotFound, "User not found"))
 		return
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(userFound.Password), []byte(authInput.Password)); err != nil {
 		logger.Warn("Invalid password attempt", "email", authInput.Email)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid password"})
+		c.Error(models.WrapError(http.StatusBadRequest, errors.ErrInvalidPassword, "Incorrect password"))
 		return
 	}
 
@@ -95,7 +95,7 @@ func Login(c *gin.Context) {
 
 	if err != nil {
 		logger.Error("Failed to generate token", "error", err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{"error": "failed to generate token"})
+		c.Error(models.WrapError(http.StatusInternalServerError, errors.ErrGeneratingToken, "Failed to generate token"))
 	}
 	logger.Info("User logged in successfully", "user_id", userFound.ID)
 
