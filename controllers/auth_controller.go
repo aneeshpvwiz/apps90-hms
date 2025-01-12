@@ -54,7 +54,18 @@ func CreateUser(c *gin.Context) {
 
 	logger.Info("User created successfully", "email", authInput.Email, "user_id", user.ID)
 
-	c.JSON(http.StatusOK, gin.H{"data": user})
+	// Sanitize user data: Remove sensitive and unnecessary fields
+	userResponse := gin.H{
+		"id":    user.ID,
+		"email": user.Email,
+	}
+
+	// Return success response with sanitized user data
+	c.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"message": "User created successfully",
+		"data":    userResponse,
+	})
 
 }
 
@@ -99,8 +110,11 @@ func Login(c *gin.Context) {
 	}
 	logger.Info("User logged in successfully", "user_id", userFound.ID)
 
-	c.JSON(200, gin.H{
-		"token": token,
+	// Return success response with sanitized user data
+	c.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"message": "Succesfully validate the user",
+		"data":    token,
 	})
 }
 

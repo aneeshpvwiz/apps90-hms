@@ -9,11 +9,8 @@ import (
 
 // APIErrorMiddleware handles API errors consistently
 func APIErrorMiddleware() gin.HandlerFunc {
-	log.Printf("Reached here ##############")
 	return func(c *gin.Context) {
 		c.Next() // Process the request
-
-		log.Printf("Reached here ##############")
 
 		// Check for errors in the Gin context
 		for _, ginErr := range c.Errors {
@@ -26,7 +23,7 @@ func APIErrorMiddleware() gin.HandlerFunc {
 				})
 
 				// Log the error for debugging purposes
-				log.Printf("API Error ##############: %v", apiErr)
+				log.Printf("API Error in middleware %v", apiErr)
 				// Stop further processing
 				return
 			}

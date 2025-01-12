@@ -8,6 +8,7 @@ import (
 
 func InitRoutes() *gin.Engine {
 	router := gin.Default()
+	//router.Use(middlewares.APIResponseMiddleware())
 	router.Use(middlewares.APIErrorMiddleware())
 
 	// Register routes
