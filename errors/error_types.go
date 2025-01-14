@@ -15,4 +15,5 @@ var (
 	InternalServerError = errors.New("INTERNAL_SERVER_ERROR")
 	ErrDatabaseFailed   = errors.New("DATABASE_ERROR")
 	ErrBadRequest       = errors.New("BAD_REQUEST")
+	ErrObjectNotFound   = errors.New("OBJECT_NOT_FOUND")
 )

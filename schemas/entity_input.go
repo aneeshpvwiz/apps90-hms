@@ -1,5 +1,7 @@
 package schemas
 
+import "time"
+
 type EntityInput struct {
 	Name    string `json:"name" binding:"required"`
 	Address string `json:"address" binding:"required"`
@@ -32,4 +34,14 @@ type EmployeeInput struct {
 	DateOfBirth        string `json:"date_of_birth" binding:"required"`
 	EntityID           uint   `json:"entity_id" binding:"required"`
 	EmployeeCategoryID uint   `json:"employee_category_id" binding:"required"`
+}
+
+// AppointmentInput represents the structure of appointment input in the request body.
+type AppointmentInput struct {
+	AppointmentTime time.Time `json:"appointment_time"`
+	Reason          string    `json:"reason"`
+	Notes           string    `json:"notes"`
+	PatientID       uint      `json:"patient_id"`
+	DoctorID        uint      `json:"doctor_id"`
+	EntityID        uint      `json:"entity_id"`
 }
