@@ -113,7 +113,7 @@ func Login(c *gin.Context) {
 	// Return success response with sanitized user data
 	c.JSON(http.StatusOK, gin.H{
 		"status":  "success",
-		"message": "Succesfully validate the user",
+		"message": "Succesfully validated the user",
 		"data":    token,
 	})
 }

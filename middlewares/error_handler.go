@@ -18,7 +18,7 @@ func APIErrorMiddleware() gin.HandlerFunc {
 				// Send a structured error response
 				c.JSON(apiErr.StatusCode, gin.H{
 					"code":    apiErr.StatusCode,
-					"error":   apiErr.ErrorType,
+					"error":   true,
 					"message": apiErr.Message,
 				})
 
