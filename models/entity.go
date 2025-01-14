@@ -52,6 +52,7 @@ type Employee struct {
 	Entity             Entity            `json:"entity" gorm:"foreignKey:EntityID"`
 	EmployeeCategoryID uint              `json:"employee_category_id"` // Foreign key to EmployeeCategory
 	EmployeeCategory   EmployeeCategory  `json:"employee_category" gorm:"foreignKey:EmployeeCategoryID"`
+	Patients           []Patient         `json:"patients" gorm:"foreignKey:DoctorID"` // List of patients assigned to this doctor
 	AuditFields        `gorm:"embedded"` // Embedding AuditFields
 }
 
@@ -69,12 +70,26 @@ type Patient struct {
 	DateOfBirth   string            `json:"date_of_birth"`
 	ContactNumber string            `json:"contact_number"`
 	Email         string            `json:"email" gorm:"unique"`
-	Address       string            `json:"address"`
+	Address       string            `json:"address" gorm:"type:text"`
 	EntityID      uint              `json:"entity_id"`
 	Entity        Entity            `json:"entity" gorm:"foreignKey:EntityID"`
+	MaritalStatus string            `json:"marital_status"`
+	Occupation    string            `json:"occupation"`
+	DoctorID      uint              `json:"doctor_id"`                         // Foreign key to Employee (Doctor)
+	Doctor        Employee          `json:"doctor" gorm:"foreignKey:DoctorID"` // Reference to the doctor
 	AuditFields   `gorm:"embedded"` // Embedding AuditFields
 }
 
 func (Patient) TableName() string {
 	return "patient"
 }
+
+/*
+
+Patient Details with Visit Details
+
+Prescription
+
+Treatment
+
+*/
