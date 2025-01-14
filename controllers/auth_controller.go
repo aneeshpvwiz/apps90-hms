@@ -120,9 +120,54 @@ func Login(c *gin.Context) {
 
 func GetUserProfile(c *gin.Context) {
 
-	user, _ := c.Get("currentUser")
+	// Initialize the logger
+	logger := loggers.InitializeLogger()
 
-	c.JSON(200, gin.H{
-		"user": user,
-	})
+	// Retrieve the current user from the context
+	user, ok := c.Get("currentUser")
+	if !ok {
+		logger.Warn("User not found in context", "context_key", "currentUser")
+		c.Error(models.WrapError(http.StatusNotFound, errors.ErrUserNotFound, "User not found"))
+		return
+	}
+
+	// Type assertion to your user struct
+	userData, ok := user.(models.User)
+	if !ok {
+		logger.Error("Failed to assert user from context", "context_key", "currentUser", "user_data", user)
+		c.Error(models.WrapError(http.StatusInternalServerError, errors.InternalServerError, "Internal server error - user type assertion failed"))
+		return
+	}
+
+	// Log successful user retrieval
+	logger.Info("User profile found", "user_id", userData.ID, "email", userData.Email)
+
+	// preload the related Entities
+	var userWithEntities models.User
+	if err := initializers.DB.Preload("Entities").First(&userWithEntities, userData.ID).Error; err != nil {
+		logger.Error("Failed to load user and entities", "user_id", userData.ID, "error", err.Error())
+		c.Error(models.WrapError(http.StatusInternalServerError, errors.ErrDatabaseFailed, "Failed to load user and entities"))
+		return
+	}
+
+	// Prepare the response object with the user and entities data
+	var entities []gin.H
+	for _, entity := range userWithEntities.Entities {
+		entities = append(entities, gin.H{
+			"id":   entity.ID,
+			"name": entity.Name,
+		})
+	}
+
+	// Log success when user profile and entities are loaded
+	logger.Info("User profile and entities loaded", "user_id", userData.ID, "entities_count", len(entities))
+
+	// Create a response object with only non-sensitive fields
+	response := gin.H{
+		"id":       userData.ID,
+		"email":    userData.Email,
+		"entities": entities,
+	}
+
+	c.JSON(http.StatusOK, response)
 }
