@@ -1,5 +1,7 @@
 package models
 
+import "time"
+
 type Entity struct {
 	ID          uint              `json:"id" gorm:"primary_key"`
 	Name        string            `json:"name" gorm:"type:varchar(254);unique"`
@@ -42,7 +44,6 @@ func (EmployeeCategory) TableName() string {
 
 type Employee struct {
 	ID                 uint              `json:"id" gorm:"primary_key"`
-	Name               string            `json:"name" gorm:"type:varchar(20);unique"`
 	FirstName          string            `json:"first_name"`
 	LastName           string            `json:"last_name"`
 	Email              string            `json:"email" gorm:"unique"`
@@ -67,14 +68,14 @@ type Patient struct {
 	FirstName     string            `json:"first_name"`
 	LastName      string            `json:"last_name"`
 	Gender        string            `json:"gender"`
-	DateOfBirth   string            `json:"date_of_birth"`
+	DateOfBirth   time.Time         `json:"date_of_birth"`
 	ContactNumber string            `json:"contact_number"`
 	Email         string            `json:"email" gorm:"unique"`
 	Address       string            `json:"address" gorm:"type:text"`
 	EntityID      uint              `json:"entity_id"`
 	Entity        Entity            `json:"entity" gorm:"foreignKey:EntityID"`
 	MaritalStatus string            `json:"marital_status"`
-	Occupation    string            `json:"occupation"`
+	Occupation    string            `json:"occupation" gorm:"default:null"`
 	DoctorID      uint              `json:"doctor_id"`                         // Foreign key to Employee (Doctor)
 	Doctor        Employee          `json:"doctor" gorm:"foreignKey:DoctorID"` // Reference to the doctor
 	AuditFields   `gorm:"embedded"` // Embedding AuditFields

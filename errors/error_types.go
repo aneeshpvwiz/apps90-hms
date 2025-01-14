@@ -14,4 +14,5 @@ var (
 	ErrObjectExists     = errors.New("ERR_OBJECT_EXISTS")
 	InternalServerError = errors.New("INTERNAL_SERVER_ERROR")
 	ErrDatabaseFailed   = errors.New("DATABASE_ERROR")
+	ErrBadRequest       = errors.New("BAD_REQUEST")
 )
