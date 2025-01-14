@@ -16,4 +16,6 @@ func main() {
 	initializers.DB.AutoMigrate(&models.User{})
 	initializers.DB.AutoMigrate(&models.Entity{})
 	initializers.DB.AutoMigrate(&models.UserEntity{})
+	initializers.DB.AutoMigrate(&models.Employee{})
+	initializers.DB.AutoMigrate(&models.EmployeeCategory{})
 }
