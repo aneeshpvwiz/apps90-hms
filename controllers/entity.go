@@ -217,8 +217,17 @@ func GetPatientList(c *gin.Context) {
 	var patientList []map[string]interface{}
 	for _, patient := range patients {
 		patientList = append(patientList, map[string]interface{}{
-			"id":     patient.ID,
-			"name":   patient.FirstName + " " + patient.LastName,
+			"id":             patient.ID,
+			"first_name":     patient.FirstName,
+			"last_name":      patient.LastName,
+			"gender":         patient.Gender,
+			"date_of_birth":  patient.DateOfBirth,
+			"contact_number": patient.ContactNumber,
+			"email":          patient.Email,
+			"address":        patient.Address,
+			"marital_status": patient.MaritalStatus,
+			"occupation":     patient.Occupation,
+
 			"doctor": patient.Doctor.FirstName + " " + patient.Doctor.LastName, // Doctor's name
 		})
 	}

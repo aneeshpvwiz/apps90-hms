@@ -154,8 +154,9 @@ func GetUserProfile(c *gin.Context) {
 	var entities []gin.H
 	for _, entity := range userWithEntities.Entities {
 		entities = append(entities, gin.H{
-			"id":   entity.ID,
-			"name": entity.Name,
+			"id":      entity.ID,
+			"name":    entity.Name,
+			"address": entity.Address,
 		})
 	}
 
