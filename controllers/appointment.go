@@ -108,9 +108,26 @@ func GetAppointments(c *gin.Context) {
 		return
 	}
 
+	// Prepare the filtered response
+	var appointmentResponses []map[string]interface{}
+	for _, appointment := range appointments {
+		appointmentResponses = append(appointmentResponses, map[string]interface{}{
+			"appointment_id":    appointment.ID,
+			"appointment_time":  appointment.AppointmentTime,
+			"reason":            appointment.Reason,
+			"notes":             appointment.Notes,
+			"patient_firstname": appointment.Patient.FirstName,
+			"patient_lastname":  appointment.Patient.LastName,
+			"patient_gender":    appointment.Patient.Gender,
+			"patient_dob":       appointment.Patient.DateOfBirth,
+			"doctor_firstname":  appointment.Employee.FirstName,
+			"doctor_lastname":   appointment.Employee.LastName,
+		})
+	}
+
 	// Return the list of appointments with the desired response format
 	c.JSON(http.StatusOK, gin.H{
-		"data":    appointments,
+		"data":    appointmentResponses,
 		"message": "Successfully retrieved appointments",
 		"status":  "Success",
 	})
