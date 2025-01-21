@@ -317,3 +317,94 @@ func formatOutpatientVisits(visits []models.OutpatientVisit) []gin.H {
 	}
 	return formattedVisits
 }
+
+// GetMedicineCategories retrieves medicine categories for a specific entity
+func GetMedicineCategories(c *gin.Context) {
+	entityID := c.Query("entity_id") // Get entity_id from query params
+
+	logger := loggers.InitializeLogger()
+
+	// Validate entity ID
+	var entity models.Entity
+	if err := initializers.DB.First(&entity, entityID).Error; err != nil {
+		logger.Error("Entity not found", "entity_id", entityID, "error", err.Error())
+		c.JSON(http.StatusNotFound, gin.H{"data": nil, "message": "Entity not found", "status": "Error"})
+		return
+	}
+
+	// Fetch medicine categories for the entity
+	var categories []models.MedicineCategory
+	if err := initializers.DB.Where("entity_id = ?", entityID).Find(&categories).Error; err != nil {
+		logger.Error("Error fetching medicine categories", "entity_id", entityID, "error", err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"data": nil, "message": "Failed to retrieve categories", "status": "Error"})
+		return
+	}
+
+	// Format response
+	var response []gin.H
+	for _, category := range categories {
+		response = append(response, gin.H{
+			"id":   category.ID,
+			"name": category.Name,
+		})
+	}
+
+	logger.Info("Medicine categories fetched successfully", "entity_id", entityID)
+
+	// Return data
+	c.JSON(http.StatusOK, gin.H{
+		"data":    response,
+		"message": "Successfully fetched medicine categories",
+		"status":  "Success",
+	})
+}
+
+// GetMedicines retrieves medicines for a specific entity and category
+func GetMedicines(c *gin.Context) {
+	entityID := c.Query("entity_id")     // Entity ID from query params
+	categoryID := c.Query("category_id") // Category ID from query params
+
+	logger := loggers.InitializeLogger()
+
+	// Validate entity ID
+	var entity models.Entity
+	if err := initializers.DB.First(&entity, entityID).Error; err != nil {
+		logger.Error("Entity not found", "entity_id", entityID, "error", err.Error())
+		c.JSON(http.StatusNotFound, gin.H{"data": nil, "message": "Entity not found", "status": "Error"})
+		return
+	}
+
+	// Validate category ID
+	var category models.MedicineCategory
+	if err := initializers.DB.Where("id = ? AND entity_id = ?", categoryID, entityID).First(&category).Error; err != nil {
+		logger.Error("Medicine category not found", "category_id", categoryID, "entity_id", entityID, "error", err.Error())
+		c.JSON(http.StatusNotFound, gin.H{"data": nil, "message": "Category not found", "status": "Error"})
+		return
+	}
+
+	// Fetch medicines for the category and entity
+	var medicines []models.Medicine
+	if err := initializers.DB.Where("category_id = ? AND entity_id = ?", categoryID, entityID).Find(&medicines).Error; err != nil {
+		logger.Error("Error fetching medicines", "category_id", categoryID, "entity_id", entityID, "error", err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"data": nil, "message": "Failed to retrieve medicines", "status": "Error"})
+		return
+	}
+
+	// Format response
+	var response []gin.H
+	for _, medicine := range medicines {
+		response = append(response, gin.H{
+			"id":   medicine.ID,
+			"name": medicine.Name,
+		})
+	}
+
+	logger.Info("Medicines fetched successfully", "category_id", categoryID, "entity_id", entityID)
+
+	// Return data
+	c.JSON(http.StatusOK, gin.H{
+		"data":    response,
+		"message": "Successfully fetched medicines",
+		"status":  "Success",
+	})
+}
