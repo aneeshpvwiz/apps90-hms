@@ -235,3 +235,85 @@ func GetPatientList(c *gin.Context) {
 	// Return the simplified list of patients
 	c.JSON(http.StatusOK, gin.H{"data": patientList})
 }
+
+func GetPatientDetails(c *gin.Context) {
+	logger := loggers.InitializeLogger()
+
+	// Parse patient ID from URL
+	patientID := c.Param("id")
+
+	// Validate if patient ID is provided and valid
+	var patient models.Patient
+	if err := initializers.DB.First(&patient, patientID).Error; err != nil {
+		logger.Warn("Patient not found", "patient_id", patientID)
+		c.JSON(http.StatusNotFound, gin.H{"message": "Patient not found", "status": "Error"})
+		return
+	}
+
+	// Fetch inpatient visits
+	var inpatientVisits []models.InpatientVisit
+	initializers.DB.Where("patient_id = ?", patientID).Find(&inpatientVisits)
+
+	// Fetch outpatient visits
+	var outpatientVisits []models.OutpatientVisit
+	initializers.DB.Where("patient_id = ?", patientID).Find(&outpatientVisits)
+
+	// Format the response
+	response := gin.H{
+		"data": gin.H{
+			"patient": gin.H{
+				"id":             patient.ID,
+				"first_name":     patient.FirstName,
+				"last_name":      patient.LastName,
+				"gender":         patient.Gender,
+				"date_of_birth":  patient.DateOfBirth,
+				"contact_number": patient.ContactNumber,
+				"email":          patient.Email,
+				"address":        patient.Address,
+				"marital_status": patient.MaritalStatus,
+				"occupation":     patient.Occupation,
+			},
+			"visit_history": gin.H{
+				"inpatient_visits":  formatInpatientVisits(inpatientVisits),
+				"outpatient_visits": formatOutpatientVisits(outpatientVisits),
+			},
+		},
+		"message": "Successfully fetched patient details",
+		"status":  "Success",
+	}
+
+	logger.Info("Fetched patient details successfully", "patient_id", patientID)
+	c.JSON(http.StatusOK, response)
+}
+
+func formatInpatientVisits(visits []models.InpatientVisit) []gin.H {
+	var formattedVisits []gin.H
+	for _, visit := range visits {
+		formattedVisits = append(formattedVisits, gin.H{
+			"id":             visit.ID,
+			"admission_date": visit.AdmissionDate,
+			"discharge_date": visit.DischargeDate,
+			"room_number":    visit.RoomNumber,
+			"diagnosis":      visit.Diagnosis,
+			"treatment_plan": visit.TreatmentPlan,
+			"notes":          visit.Notes,
+			"doctor_id":      visit.DoctorID,
+		})
+	}
+	return formattedVisits
+}
+
+func formatOutpatientVisits(visits []models.OutpatientVisit) []gin.H {
+	var formattedVisits []gin.H
+	for _, visit := range visits {
+		formattedVisits = append(formattedVisits, gin.H{
+			"id":             visit.ID,
+			"visit_date":     visit.VisitDate,
+			"diagnosis":      visit.Diagnosis,
+			"treatment_plan": visit.TreatmentPlan,
+			"notes":          visit.Notes,
+			"doctor_id":      visit.DoctorID,
+		})
+	}
+	return formattedVisits
+}
