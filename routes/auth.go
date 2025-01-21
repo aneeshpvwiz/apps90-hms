@@ -1,7 +1,7 @@
 package routes
 
 import (
-	"apps90-hms/controllers"
+	authControllers "apps90-hms/controllers/auth"
 	"apps90-hms/middlewares"
 
 	"github.com/gin-gonic/gin"
@@ -10,8 +10,8 @@ import (
 func AuthRoutes(r *gin.Engine) {
 	auth := r.Group("/auth")
 	{
-		auth.POST("/register", controllers.CreateUser)
-		auth.POST("/login", controllers.Login)
-		auth.GET("/profile", middlewares.CheckAuth, controllers.GetUserProfile)
+		auth.POST("/register", authControllers.CreateUser)
+		auth.POST("/login", authControllers.Login)
+		auth.GET("/profile", middlewares.CheckAuth, authControllers.GetUserProfile)
 	}
 }

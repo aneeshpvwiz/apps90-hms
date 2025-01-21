@@ -20,4 +20,6 @@ func main() {
 	initializers.DB.AutoMigrate(&models.Employee{})
 	initializers.DB.AutoMigrate(&models.Patient{})
 	initializers.DB.AutoMigrate(&models.Appointment{})
+	initializers.DB.AutoMigrate(&models.InpatientVisit{})
+	initializers.DB.AutoMigrate(&models.OutpatientVisit{})
 }

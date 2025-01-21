@@ -1,4 +1,4 @@
-package controllers
+package entityController
 
 import (
 	"apps90-hms/errors"

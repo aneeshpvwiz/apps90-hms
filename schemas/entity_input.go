@@ -45,3 +45,25 @@ type AppointmentInput struct {
 	DoctorID        uint      `json:"doctor_id"`
 	EntityID        uint      `json:"entity_id"`
 }
+
+type OutpatientVisitInput struct {
+	AppointmentID *uint     `json:"appointment_id"` // Nullable for walk-ins
+	VisitDate     time.Time `json:"visit_date"`
+	Diagnosis     string    `json:"diagnosis"`
+	TreatmentPlan string    `json:"treatment_plan"`
+	Notes         string    `json:"notes"`
+	PatientID     uint      `json:"patient_id"`
+	DoctorID      uint      `json:"doctor_id"`
+}
+
+type InpatientVisitInput struct {
+	AppointmentID *uint      `json:"appointment_id"` // Nullable for emergency admissions
+	AdmissionDate time.Time  `json:"admission_date"`
+	DischargeDate *time.Time `json:"discharge_date"` // Nullable for ongoing admissions
+	RoomNumber    string     `json:"room_number"`
+	Diagnosis     string     `json:"diagnosis"`
+	TreatmentPlan string     `json:"treatment_plan"`
+	Notes         string     `json:"notes"`
+	PatientID     uint       `json:"patient_id"`
+	DoctorID      uint       `json:"doctor_id"`
+}
