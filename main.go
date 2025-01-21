@@ -5,11 +5,15 @@ import (
 	"apps90-hms/routes"
 
 	"apps90-hms/loggers"
+
+	"github.com/gin-gonic/gin"
 )
 
 func init() {
 	initializers.LoadEnvVariables()
 	initializers.ConnectToDB()
+
+	gin.SetMode(gin.ReleaseMode)
 
 }
 
