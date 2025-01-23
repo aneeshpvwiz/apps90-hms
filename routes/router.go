@@ -14,6 +14,7 @@ func InitRoutes() *gin.Engine {
 	// Register routes
 	AuthRoutes(router)
 	EntityRoutes(router)
+	PatientRoutes(router)
 
 	return router
 }

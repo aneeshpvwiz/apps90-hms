@@ -24,4 +24,6 @@ func main() {
 	initializers.DB.AutoMigrate(&models.OutpatientVisit{})
 	initializers.DB.AutoMigrate(&models.MedicineCategory{})
 	initializers.DB.AutoMigrate(&models.Medicine{})
+	initializers.DB.AutoMigrate(&models.Prescription{})
+	initializers.DB.AutoMigrate(&models.PrescriptionItem{})
 }
