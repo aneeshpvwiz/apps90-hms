@@ -64,23 +64,21 @@ func (Employee) TableName() string {
 
 // Patient represents a patient in the hospital
 type Patient struct {
-	ID                 uint               `json:"id" gorm:"primaryKey"`
-	FirstName          string             `json:"first_name"`
-	LastName           string             `json:"last_name"`
-	Gender             string             `json:"gender"`
-	DateOfBirth        time.Time          `json:"date_of_birth"`
-	ContactNumber      string             `json:"contact_number"`
-	Email              string             `json:"email" gorm:"unique"`
-	Address            string             `json:"address" gorm:"type:text"`
-	EntityID           uint               `json:"entity_id"`
-	Entity             Entity             `json:"entity" gorm:"foreignKey:EntityID"`
-	MaritalStatus      string             `json:"marital_status"`
-	Occupation         string             `json:"occupation" gorm:"default:null"`
-	DoctorID           uint               `json:"doctor_id"`                                      // Foreign key to Employee (Doctor)
-	Doctor             Employee           `json:"doctor" gorm:"foreignKey:DoctorID"`              // Reference to the doctor
-	MedicineCategories []MedicineCategory `json:"medicine_categories" gorm:"foreignKey:EntityID"` // One-to-many relationship with MedicineCategory
-	Medicines          []Medicine         `json:"medicines" gorm:"foreignKey:EntityID"`           // One-to-many relationship with Medicine
-	AuditFields        `gorm:"embedded"`  // Embedding AuditFields
+	ID            uint              `json:"id" gorm:"primaryKey"`
+	FirstName     string            `json:"first_name"`
+	LastName      string            `json:"last_name"`
+	Gender        string            `json:"gender"`
+	DateOfBirth   time.Time         `json:"date_of_birth"`
+	ContactNumber string            `json:"contact_number"`
+	Email         string            `json:"email" gorm:"unique"`
+	Address       string            `json:"address" gorm:"type:text"`
+	EntityID      uint              `json:"entity_id"`
+	Entity        Entity            `json:"entity" gorm:"foreignKey:EntityID"`
+	MaritalStatus string            `json:"marital_status"`
+	Occupation    string            `json:"occupation" gorm:"default:null"`
+	DoctorID      uint              `json:"doctor_id"`                         // Foreign key to Employee (Doctor)
+	Doctor        Employee          `json:"doctor" gorm:"foreignKey:DoctorID"` // Reference to the doctor
+	AuditFields   `gorm:"embedded"` // Embedding AuditFields
 }
 
 func (Patient) TableName() string {
