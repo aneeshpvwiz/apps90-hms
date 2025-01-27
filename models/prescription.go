@@ -5,6 +5,8 @@ import "time"
 // Prescription represents a prescription issued to a patient
 type Prescription struct {
 	ID                uint               `json:"id" gorm:"primaryKey"`
+	VisitID           uint               `json:"visit_id"`   // Foreign key for the associated visit
+	VisitType         string             `json:"visit_type"` // Can be "inpatient" or "outpatient"
 	PatientID         uint               `json:"patient_id"`
 	Patient           Patient            `json:"patient" gorm:"foreignKey:PatientID"`
 	DoctorID          uint               `json:"doctor_id"`

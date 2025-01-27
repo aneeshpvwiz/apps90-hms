@@ -12,7 +12,7 @@ func PatientRoutes(r *gin.Engine) {
 		patient.GET("/details", patientController.GetPatientDetails)
 		patient.GET("/visits", patientController.GetPatientVisitHistory)
 		patient.POST("/prescription", patientController.CreatePrescription)
-		patient.GET("/prescription", patientController.GetPatientPrescriptions)
+		patient.GET("/prescription", patientController.GetPrescriptionDetails)
 
 	}
 }

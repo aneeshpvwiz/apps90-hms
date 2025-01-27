@@ -33,6 +33,7 @@ type OutpatientVisit struct {
 	Patient       Patient           `json:"patient" gorm:"foreignKey:PatientID"`
 	DoctorID      uint              `json:"doctor_id"`
 	Doctor        Employee          `json:"doctor" gorm:"foreignKey:DoctorID"`
+	Prescriptions []Prescription    `json:"prescriptions" gorm:"foreignKey:VisitID;references:ID"`
 	AuditFields   `gorm:"embedded"` // Embedding AuditFields
 }
 
@@ -54,6 +55,7 @@ type InpatientVisit struct {
 	Diagnosis     string            `json:"diagnosis"`
 	TreatmentPlan string            `json:"treatment_plan"`
 	Notes         string            `json:"notes"`
+	Prescriptions []Prescription    `json:"prescriptions" gorm:"foreignKey:VisitID;references:ID"`
 	AuditFields   `gorm:"embedded"` // Embedding AuditFields
 }
 
