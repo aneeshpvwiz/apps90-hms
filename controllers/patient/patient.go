@@ -83,8 +83,9 @@ func GetPatientVisitHistory(c *gin.Context) {
 	// Now, fetch prescriptions for each outpatient visit explicitly
 	for i, visit := range outpatientVisits {
 		var prescriptions []models.Prescription
-		// Fetch prescriptions using the visit ID
-		if err := initializers.DB.Where("patient_id = ? AND visit_id = ? AND visit_type = ?", patientID, visit.ID, "OP").Find(&prescriptions).Error; err != nil {
+		// Fetch prescriptions using the visit ID and preload doctor details
+		if err := initializers.DB.Where("patient_id = ? AND visit_id = ? AND visit_type = ?", patientID, visit.ID, "OP").
+			Preload("Doctor").Find(&prescriptions).Error; err != nil {
 			logger.Error("Error fetching prescriptions for visit", "visit_id", visit.ID, "error", err)
 			continue
 		}
@@ -93,12 +94,13 @@ func GetPatientVisitHistory(c *gin.Context) {
 		outpatientVisits[i].Prescriptions = prescriptions
 	}
 
-	// Now, fetch prescriptions for each visit (inpatient or outpatient) explicitly
+	// Now, fetch prescriptions for each inpatient visit explicitly
 	for i, visit := range inpatientVisits {
 		var prescriptions []models.Prescription
 
-		// Fetch prescriptions based on visit_id and visit_type from the Prescription model
-		if err := initializers.DB.Where("patient_id = ? AND visit_id = ? AND visit_type = ?", patientID, visit.ID, "IP").Find(&prescriptions).Error; err != nil {
+		// Fetch prescriptions based on visit_id and visit_type, preload doctor details
+		if err := initializers.DB.Where("patient_id = ? AND visit_id = ? AND visit_type = ?", patientID, visit.ID, "IP").
+			Preload("Doctor").Find(&prescriptions).Error; err != nil {
 			logger.Error("Error fetching prescriptions for visit", "visit_id", visit.ID, "error", err)
 			continue
 		}
@@ -130,7 +132,7 @@ func formatInpatientVisits(visits []models.InpatientVisit) []gin.H {
 			for _, prescription := range visit.Prescriptions {
 				prescriptionData = append(prescriptionData, gin.H{
 					"id":          prescription.ID,
-					"doctor_name": prescription.Doctor.FirstName,
+					"doctor_name": prescription.Doctor.FirstName + " " + prescription.Doctor.LastName, // Ensure full doctor name
 					"date_issued": prescription.DateIssued.Format("2006-01-02"),
 					"notes":       prescription.Notes,
 				})
@@ -164,7 +166,7 @@ func formatOutpatientVisits(visits []models.OutpatientVisit) []gin.H {
 			for _, prescription := range visit.Prescriptions {
 				prescriptionData = append(prescriptionData, gin.H{
 					"id":          prescription.ID,
-					"doctor_name": prescription.Doctor.FirstName,
+					"doctor_name": prescription.Doctor.FirstName + " " + prescription.Doctor.LastName, // Ensure full doctor name
 					"date_issued": prescription.DateIssued.Format("2006-01-02"),
 					"notes":       prescription.Notes,
 				})
@@ -182,59 +184,88 @@ func formatOutpatientVisits(visits []models.OutpatientVisit) []gin.H {
 	return formatted
 }
 
-// CreatePrescription handles creating a new prescription
 func CreatePrescription(c *gin.Context) {
-	var input schemas.PrescriptionInput
+	var prescriptionInput schemas.PrescriptionInput
 	logger := loggers.InitializeLogger()
 
-	// Bind JSON input
-	if err := c.ShouldBindJSON(&input); err != nil {
+	if err := c.ShouldBindJSON(&prescriptionInput); err != nil {
 		logger.Error("Error binding JSON for CreatePrescription", "error", err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{"data": nil, "message": "Invalid request format", "status": "Error"})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "Failure",
+			"message": "Invalid input format",
+		})
 		return
 	}
 
-	// Validate patient
-	var patient models.Patient
-	if err := initializers.DB.First(&patient, input.PatientID).Error; err != nil {
-		logger.Error("Patient not found", "patient_id", input.PatientID, "error", err.Error())
-		c.JSON(http.StatusNotFound, gin.H{"data": nil, "message": "Patient not found", "status": "Error"})
+	if prescriptionInput.VisitID == 0 || prescriptionInput.VisitType == "" {
+		logger.Error("Visit ID and Visit Type are required")
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "Failure",
+			"message": "Visit ID and Visit Type are required",
+		})
 		return
 	}
 
 	// Validate doctor
 	var doctor models.Employee
-	if err := initializers.DB.First(&doctor, input.DoctorID).Error; err != nil {
-		logger.Error("Doctor not found", "doctor_id", input.DoctorID, "error", err.Error())
-		c.JSON(http.StatusNotFound, gin.H{"data": nil, "message": "Doctor not found", "status": "Error"})
+	if err := initializers.DB.Where("id = ? AND is_active = ?", prescriptionInput.DoctorID, true).First(&doctor).Error; err != nil {
+		logger.Error("Invalid doctor_id", "doctor_id", prescriptionInput.DoctorID, "error", err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "Failure",
+			"message": "Invalid doctor ID",
+		})
+		return
+	}
+
+	// Validate patient
+	var patient models.Patient
+	if err := initializers.DB.Where("id = ? AND is_active = ?", prescriptionInput.PatientID, true).First(&patient).Error; err != nil {
+		logger.Error("Invalid patient_id", "patient_id", prescriptionInput.PatientID, "error", err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "Failure",
+			"message": "Invalid patient ID",
+		})
 		return
 	}
 
 	// Create prescription
 	prescription := models.Prescription{
-		PatientID:  input.PatientID,
-		DoctorID:   input.DoctorID,
+		PatientID:  prescriptionInput.PatientID,
+		DoctorID:   prescriptionInput.DoctorID,
+		VisitID:    prescriptionInput.VisitID,
+		VisitType:  prescriptionInput.VisitType,
 		DateIssued: time.Now(),
-		Notes:      input.Notes,
+		Notes:      prescriptionInput.Notes,
 	}
 
-	initializers.DB.Create(&prescription)
+	if err := initializers.DB.Create(&prescription).Error; err != nil {
+		logger.Error("Error creating prescription", "error", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "Failure",
+			"message": "Error creating prescription",
+		})
+		return
+	}
 
 	// Add prescription items
-	for _, item := range input.Items {
+	for _, item := range prescriptionInput.Items {
 		prescriptionItem := models.PrescriptionItem{
 			PrescriptionID: prescription.ID,
 			MedicineID:     item.MedicineID,
 			Quantity:       item.Quantity,
 			Instructions:   item.Instructions,
 		}
-		initializers.DB.Create(&prescriptionItem)
+
+		if err := initializers.DB.Create(&prescriptionItem).Error; err != nil {
+			logger.Error("Error creating prescription item", "prescription_id", prescription.ID, "error", err)
+			continue
+		}
 	}
 
 	logger.Info("Prescription created successfully", "prescription_id", prescription.ID)
 	c.JSON(http.StatusOK, gin.H{
 		"data":    prescription.ID,
-		"message": "Successfully created prescription",
+		"message": "Successfully created a prescription",
 		"status":  "Success",
 	})
 }
