@@ -54,7 +54,6 @@ func GetPatientDetails(c *gin.Context) {
 
 func GetPatientVisitHistory(c *gin.Context) {
 	patientID := c.Query("patient_id")
-
 	logger := loggers.InitializeLogger()
 
 	// Validate patient_id
@@ -64,124 +63,67 @@ func GetPatientVisitHistory(c *gin.Context) {
 		return
 	}
 
-	// Fetch inpatient visits
-	var inpatientVisits []models.InpatientVisit
-	if err := initializers.DB.Where("patient_id = ?", patientID).Find(&inpatientVisits).Error; err != nil {
-		logger.Error("Error fetching inpatient visits for patient", "patient_id", patientID, "error", err.Error())
+	// Fetch visits (both inpatient and outpatient)
+	var visits []models.Visit
+	if err := initializers.DB.Where("patient_id = ?", patientID).Preload("Doctor").Find(&visits).Error; err != nil {
+		logger.Error("Error fetching visits for patient", "patient_id", patientID, "error", err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"data": nil, "message": "Failed to fetch visit history", "status": "Error"})
 		return
 	}
 
-	// Fetch outpatient visits
-	var outpatientVisits []models.OutpatientVisit
-	if err := initializers.DB.Where("patient_id = ?", patientID).Find(&outpatientVisits).Error; err != nil {
-		logger.Error("Error fetching outpatient visits for patient", "patient_id", patientID, "error", err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{"data": nil, "message": "Failed to fetch visit history", "status": "Error"})
-		return
-	}
+	// Prepare visit responses
+	var inpatientVisits []schemas.VisitResponse
+	var outpatientVisits []schemas.VisitResponse
 
-	// Now, fetch prescriptions for each outpatient visit explicitly
-	for i, visit := range outpatientVisits {
+	// Iterate through visits
+	for _, visit := range visits {
 		var prescriptions []models.Prescription
-		// Fetch prescriptions using the visit ID and preload doctor details
-		if err := initializers.DB.Where("patient_id = ? AND visit_id = ? AND visit_type = ?", patientID, visit.ID, "OP").
-			Preload("Doctor").Find(&prescriptions).Error; err != nil {
+
+		// Fetch only prescription IDs for the visit
+		if err := initializers.DB.Select("id").Where("visit_id = ? AND visit_type = ?", visit.ID, visit.VisitType).
+			Find(&prescriptions).Error; err != nil {
 			logger.Error("Error fetching prescriptions for visit", "visit_id", visit.ID, "error", err)
 			continue
 		}
 
-		// Assign the fetched prescriptions to the visit
-		outpatientVisits[i].Prescriptions = prescriptions
-	}
-
-	// Now, fetch prescriptions for each inpatient visit explicitly
-	for i, visit := range inpatientVisits {
-		var prescriptions []models.Prescription
-
-		// Fetch prescriptions based on visit_id and visit_type, preload doctor details
-		if err := initializers.DB.Where("patient_id = ? AND visit_id = ? AND visit_type = ?", patientID, visit.ID, "IP").
-			Preload("Doctor").Find(&prescriptions).Error; err != nil {
-			logger.Error("Error fetching prescriptions for visit", "visit_id", visit.ID, "error", err)
-			continue
+		// Extract prescription IDs
+		var prescriptionData []schemas.PrescriptionResponse
+		for _, prescription := range prescriptions {
+			prescriptionData = append(prescriptionData, schemas.PrescriptionResponse{
+				ID: prescription.ID,
+			})
 		}
 
-		// Assign the fetched prescriptions to the visit
-		inpatientVisits[i].Prescriptions = prescriptions
+		// Create a VisitResponse object and populate necessary fields
+		visitResponse := schemas.VisitResponse{
+			ID:            visit.ID,
+			VisitDate:     visit.VisitDate,
+			RoomNumber:    visit.RoomNumber,
+			Diagnosis:     visit.Diagnosis,
+			TreatmentPlan: visit.TreatmentPlan,
+			Notes:         visit.Notes,
+			VisitType:     visit.VisitType,
+			DoctorName:    visit.Doctor.FirstName + " " + visit.Doctor.LastName, // Fetch doctor's name
+			Prescriptions: prescriptionData,
+		}
+
+		// Sort into inpatient or outpatient visits
+		if visit.VisitType == "IP" {
+			inpatientVisits = append(inpatientVisits, visitResponse)
+		} else if visit.VisitType == "OP" {
+			outpatientVisits = append(outpatientVisits, visitResponse)
+		}
 	}
 
-	// Format responses
-	formattedInpatientVisits := formatInpatientVisits(inpatientVisits)
-	formattedOutpatientVisits := formatOutpatientVisits(outpatientVisits)
-
+	// Send the formatted response
 	c.JSON(http.StatusOK, gin.H{
 		"data": gin.H{
-			"inpatient_visits":  formattedInpatientVisits,
-			"outpatient_visits": formattedOutpatientVisits,
+			"inpatient_visits":  inpatientVisits,
+			"outpatient_visits": outpatientVisits,
 		},
 		"message": "Successfully fetched patient visit history",
 		"status":  "Success",
 	})
-}
-
-func formatInpatientVisits(visits []models.InpatientVisit) []gin.H {
-	var formatted []gin.H
-
-	for _, visit := range visits {
-		prescriptionData := []gin.H{}
-		if visit.Prescriptions != nil {
-			for _, prescription := range visit.Prescriptions {
-				prescriptionData = append(prescriptionData, gin.H{
-					"id":          prescription.ID,
-					"doctor_name": prescription.Doctor.FirstName + " " + prescription.Doctor.LastName, // Ensure full doctor name
-					"date_issued": prescription.DateIssued.Format("2006-01-02"),
-					"notes":       prescription.Notes,
-				})
-			}
-		}
-
-		// Check if DischargeDate is nil (pointer is nil)
-		dischargeDate := ""
-		if visit.DischargeDate != nil {
-			dischargeDate = visit.DischargeDate.Format("2006-01-02")
-		}
-
-		formatted = append(formatted, gin.H{
-			"id":             visit.ID,
-			"admission_date": visit.AdmissionDate.Format("2006-01-02"),
-			"discharge_date": dischargeDate,
-			"notes":          visit.Notes,
-			"prescriptions":  prescriptionData,
-		})
-	}
-
-	return formatted
-}
-
-func formatOutpatientVisits(visits []models.OutpatientVisit) []gin.H {
-	var formatted []gin.H
-
-	for _, visit := range visits {
-		prescriptionData := []gin.H{}
-		if visit.Prescriptions != nil {
-			for _, prescription := range visit.Prescriptions {
-				prescriptionData = append(prescriptionData, gin.H{
-					"id":          prescription.ID,
-					"doctor_name": prescription.Doctor.FirstName + " " + prescription.Doctor.LastName, // Ensure full doctor name
-					"date_issued": prescription.DateIssued.Format("2006-01-02"),
-					"notes":       prescription.Notes,
-				})
-			}
-		}
-
-		formatted = append(formatted, gin.H{
-			"id":            visit.ID,
-			"visit_date":    visit.VisitDate.Format("2006-01-02"),
-			"notes":         visit.Notes,
-			"prescriptions": prescriptionData,
-		})
-	}
-
-	return formatted
 }
 
 func CreatePrescription(c *gin.Context) {
@@ -224,6 +166,41 @@ func CreatePrescription(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status":  "Failure",
 			"message": "Invalid patient ID",
+		})
+		return
+	}
+
+	// Validate visit exists based on visit_type
+	var visitExists bool
+	if prescriptionInput.VisitType == "OP" {
+		var outpatientVisit models.Visit
+		if err := initializers.DB.Where("id = ?", prescriptionInput.VisitID).First(&outpatientVisit).Error; err != nil {
+			logger.Error("Outpatient visit not found", "visit_id", prescriptionInput.VisitID, "error", err)
+			c.JSON(http.StatusBadRequest, gin.H{
+				"status":  "Failure",
+				"message": "Visit ID does not exist for the given visit type",
+			})
+			return
+		}
+		visitExists = true
+	} else if prescriptionInput.VisitType == "IP" {
+		var inpatientVisit models.Visit
+		if err := initializers.DB.Where("id = ?", prescriptionInput.VisitID).First(&inpatientVisit).Error; err != nil {
+			logger.Error("Inpatient visit not found", "visit_id", prescriptionInput.VisitID, "error", err)
+			c.JSON(http.StatusBadRequest, gin.H{
+				"status":  "Failure",
+				"message": "Visit ID does not exist for the given visit type",
+			})
+			return
+		}
+		visitExists = true
+	}
+
+	if !visitExists {
+		logger.Error("Visit ID does not exist for the given visit type", "visit_id", prescriptionInput.VisitID, "visit_type", prescriptionInput.VisitType)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "Failure",
+			"message": "Visit ID does not exist for the given visit type",
 		})
 		return
 	}

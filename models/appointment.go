@@ -21,46 +21,26 @@ func (Appointment) TableName() string {
 	return "appointment"
 }
 
-type OutpatientVisit struct {
+type Visit struct {
 	ID            uint              `json:"id" gorm:"primaryKey"`
 	AppointmentID *uint             `json:"appointment_id"` // Nullable for walk-ins
 	Appointment   *Appointment      `json:"appointment" gorm:"foreignKey:AppointmentID"`
 	VisitDate     time.Time         `json:"visit_date"`
-	Diagnosis     string            `json:"diagnosis"`
-	TreatmentPlan string            `json:"treatment_plan"`
-	Notes         string            `json:"notes"`
-	PatientID     uint              `json:"patient_id"`
-	Patient       Patient           `json:"patient" gorm:"foreignKey:PatientID"`
-	DoctorID      uint              `json:"doctor_id"`
-	Doctor        Employee          `json:"doctor" gorm:"foreignKey:DoctorID"`
-	Prescriptions []Prescription    `json:"prescriptions" gorm:"foreignKey:VisitID;references:ID"`
-	VisitType     string            `json:"visit_type" gorm:"default:'OP'"`
-	AuditFields   `gorm:"embedded"` // Embedding AuditFields
-}
-
-func (OutpatientVisit) TableName() string {
-	return "outpatient_visit"
-}
-
-type InpatientVisit struct {
-	ID            uint              `json:"id" gorm:"primaryKey"`
-	AppointmentID *uint             `json:"appointment_id"` // Nullable for emergency admissions
-	Appointment   *Appointment      `json:"appointment" gorm:"foreignKey:AppointmentID"`
 	AdmissionDate time.Time         `json:"admission_date"`
 	DischargeDate *time.Time        `json:"discharge_date"` // Nullable for ongoing admissions
 	RoomNumber    string            `json:"room_number"`
+	Diagnosis     string            `json:"diagnosis"`
+	TreatmentPlan string            `json:"treatment_plan"`
+	Notes         string            `json:"notes"`
 	PatientID     uint              `json:"patient_id"`
 	Patient       Patient           `json:"patient" gorm:"foreignKey:PatientID"`
 	DoctorID      uint              `json:"doctor_id"`
 	Doctor        Employee          `json:"doctor" gorm:"foreignKey:DoctorID"`
-	Diagnosis     string            `json:"diagnosis"`
-	TreatmentPlan string            `json:"treatment_plan"`
-	Notes         string            `json:"notes"`
 	Prescriptions []Prescription    `json:"prescriptions" gorm:"foreignKey:VisitID;references:ID"`
-	VisitType     string            `json:"visit_type" gorm:"default:'IP'"`
+	VisitType     string            `json:"visit_type" `
 	AuditFields   `gorm:"embedded"` // Embedding AuditFields
 }
 
-func (InpatientVisit) TableName() string {
-	return "inpatient_visit"
+func (Visit) TableName() string {
+	return "visit"
 }

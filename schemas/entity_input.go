@@ -46,24 +46,32 @@ type AppointmentInput struct {
 	EntityID        uint      `json:"entity_id"`
 }
 
-type OutpatientVisitInput struct {
-	AppointmentID *uint     `json:"appointment_id"` // Nullable for walk-ins
-	VisitDate     time.Time `json:"visit_date"`
-	Diagnosis     string    `json:"diagnosis"`
-	TreatmentPlan string    `json:"treatment_plan"`
-	Notes         string    `json:"notes"`
-	PatientID     uint      `json:"patient_id"`
-	DoctorID      uint      `json:"doctor_id"`
-}
-
-type InpatientVisitInput struct {
-	AppointmentID *uint      `json:"appointment_id"` // Nullable for emergency admissions
+type VisitInput struct {
+	PatientID     uint       `json:"patient_id"`
+	DoctorID      uint       `json:"doctor_id"`
+	AppointmentID *uint      `json:"appointment_id,omitempty"` // Nullable for walk-ins
+	VisitDate     time.Time  `json:"visit_date"`
 	AdmissionDate time.Time  `json:"admission_date"`
-	DischargeDate *time.Time `json:"discharge_date"` // Nullable for ongoing admissions
+	DischargeDate *time.Time `json:"discharge_date,omitempty"` // Nullable for ongoing admissions
 	RoomNumber    string     `json:"room_number"`
 	Diagnosis     string     `json:"diagnosis"`
 	TreatmentPlan string     `json:"treatment_plan"`
 	Notes         string     `json:"notes"`
-	PatientID     uint       `json:"patient_id"`
-	DoctorID      uint       `json:"doctor_id"`
+	VisitType     string     `json:"visit_type"` // IP or OP
+}
+
+type PrescriptionResponse struct {
+	ID uint `json:"id"` // Only returning prescription ID
+}
+
+type VisitResponse struct {
+	ID            uint                   `json:"id"`
+	VisitDate     time.Time              `json:"visit_date"`
+	RoomNumber    string                 `json:"room_number"`
+	Diagnosis     string                 `json:"diagnosis"`
+	TreatmentPlan string                 `json:"treatment_plan"`
+	Notes         string                 `json:"notes"`
+	VisitType     string                 `json:"visit_type"`
+	DoctorName    string                 `json:"doctor_name"` // Added doctor name
+	Prescriptions []PrescriptionResponse `json:"prescriptions,omitempty"`
 }

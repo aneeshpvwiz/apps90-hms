@@ -133,13 +133,13 @@ func GetAppointments(c *gin.Context) {
 	})
 }
 
-func CreateOutpatientVisit(c *gin.Context) {
-	var input schemas.OutpatientVisitInput
+func CreateVisit(c *gin.Context) {
+	var input schemas.VisitInput // Use your appropriate input schema
 	logger := loggers.InitializeLogger()
 
-	// Bind request body
+	// Bind the request body
 	if err := c.ShouldBindJSON(&input); err != nil {
-		logger.Error("Error binding JSON for Create Outpatient Visit", "error", err.Error())
+		logger.Error("Error binding JSON for Visit", "error", err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid request format", "status": "Error"})
 		return
 	}
@@ -160,7 +160,7 @@ func CreateOutpatientVisit(c *gin.Context) {
 		return
 	}
 
-	// Verify optional appointment
+	// Verify optional appointment if provided
 	var appointment *models.Appointment
 	if input.AppointmentID != nil {
 		if err := initializers.DB.First(&appointment, *input.AppointmentID).Error; err != nil {
@@ -170,71 +170,10 @@ func CreateOutpatientVisit(c *gin.Context) {
 		}
 	}
 
-	// Create outpatient visit
-	outpatientVisit := models.OutpatientVisit{
+	// Create the visit (Inpatient or Outpatient)
+	visit := models.Visit{
 		AppointmentID: input.AppointmentID,
 		VisitDate:     input.VisitDate,
-		Diagnosis:     input.Diagnosis,
-		TreatmentPlan: input.TreatmentPlan,
-		Notes:         input.Notes,
-		PatientID:     input.PatientID,
-		DoctorID:      input.DoctorID,
-	}
-
-	if err := initializers.DB.Create(&outpatientVisit).Error; err != nil {
-		logger.Error("Failed to create outpatient visit", "error", err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to create outpatient visit", "status": "Error"})
-		return
-	}
-
-	logger.Info("Outpatient visit created successfully", "visit_id", outpatientVisit.ID)
-	c.JSON(http.StatusOK, gin.H{
-		"data":    outpatientVisit.ID,
-		"message": "Successfully created outpatient visit",
-		"status":  "Success",
-	})
-}
-
-func CreateInpatientVisit(c *gin.Context) {
-	var input schemas.InpatientVisitInput
-	logger := loggers.InitializeLogger()
-
-	// Bind request body
-	if err := c.ShouldBindJSON(&input); err != nil {
-		logger.Error("Error binding JSON for Create Inpatient Visit", "error", err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid request format", "status": "Error"})
-		return
-	}
-
-	// Verify patient exists
-	var patient models.Patient
-	if err := initializers.DB.First(&patient, input.PatientID).Error; err != nil {
-		logger.Warn("Patient not found", "patient_id", input.PatientID)
-		c.JSON(http.StatusNotFound, gin.H{"message": "Patient not found", "status": "Error"})
-		return
-	}
-
-	// Verify doctor exists
-	var doctor models.Employee
-	if err := initializers.DB.First(&doctor, input.DoctorID).Error; err != nil {
-		logger.Warn("Doctor not found", "doctor_id", input.DoctorID)
-		c.JSON(http.StatusNotFound, gin.H{"message": "Doctor not found", "status": "Error"})
-		return
-	}
-
-	// Verify optional appointment
-	var appointment *models.Appointment
-	if input.AppointmentID != nil {
-		if err := initializers.DB.First(&appointment, *input.AppointmentID).Error; err != nil {
-			logger.Warn("Appointment not found", "appointment_id", *input.AppointmentID)
-			c.JSON(http.StatusNotFound, gin.H{"message": "Appointment not found", "status": "Error"})
-			return
-		}
-	}
-
-	// Create inpatient visit
-	inpatientVisit := models.InpatientVisit{
-		AppointmentID: input.AppointmentID,
 		AdmissionDate: input.AdmissionDate,
 		DischargeDate: input.DischargeDate,
 		RoomNumber:    input.RoomNumber,
@@ -243,18 +182,27 @@ func CreateInpatientVisit(c *gin.Context) {
 		Notes:         input.Notes,
 		PatientID:     input.PatientID,
 		DoctorID:      input.DoctorID,
+		VisitType:     input.VisitType, // Use the 'visit_type' provided in input
 	}
 
-	if err := initializers.DB.Create(&inpatientVisit).Error; err != nil {
-		logger.Error("Failed to create inpatient visit", "error", err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to create inpatient visit", "status": "Error"})
+	// Check if visit type is correct (inpatient or outpatient)
+	if visit.VisitType != "IP" && visit.VisitType != "OP" {
+		logger.Warn("Invalid visit type", "visit_type", visit.VisitType)
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid visit type. Should be 'IP' or 'OP'.", "status": "Error"})
 		return
 	}
 
-	logger.Info("Inpatient visit created successfully", "visit_id", inpatientVisit.ID)
+	// Save the visit
+	if err := initializers.DB.Create(&visit).Error; err != nil {
+		logger.Error("Failed to create visit", "error", err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to create visit", "status": "Error"})
+		return
+	}
+
+	logger.Info("Visit created successfully", "visit_id", visit.ID)
 	c.JSON(http.StatusOK, gin.H{
-		"data":    inpatientVisit.ID,
-		"message": "Successfully created inpatient visit",
+		"data":    visit.ID,
+		"message": "Successfully created visit",
 		"status":  "Success",
 	})
 }
