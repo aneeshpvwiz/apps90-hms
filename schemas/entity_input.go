@@ -75,5 +75,5 @@ type VisitResponse struct {
 	Notes         string                 `json:"notes"`
 	VisitType     string                 `json:"visit_type"`
 	DoctorName    string                 `json:"doctor_name"` // Added doctor name
-	Prescriptions []PrescriptionResponse `json:"prescriptions,omitempty"`
+	Prescriptions []PrescriptionResponse `json:"prescriptions"`
 }

@@ -70,27 +70,32 @@ func GetPatientVisitHistory(c *gin.Context) {
 		return
 	}
 
-	// Prepare response lists
-	inpatientVisits := []schemas.VisitResponse{}
-	outpatientVisits := []schemas.VisitResponse{}
+	// Prepare visit responses
+	var inpatientVisits []schemas.VisitResponse
+	var outpatientVisits []schemas.VisitResponse
 
 	// Iterate through visits
 	for _, visit := range visits {
 		var prescriptions []models.Prescription
 
 		// Fetch only prescription IDs for the visit
-		if err := initializers.DB.Select("id").Where("visit_id = ? AND visit_type = ?", visit.ID, visit.VisitType).
+		if err := initializers.DB.Select("id").Where("visit_id = ?", visit.ID).
 			Find(&prescriptions).Error; err != nil {
 			logger.Error("Error fetching prescriptions for visit", "visit_id", visit.ID, "error", err)
 			continue
 		}
 
-		// Extract prescription IDs
-		var prescriptionData []schemas.PrescriptionResponse
+		// Format prescriptions
+		var prescriptionList []schemas.PrescriptionResponse
 		for _, prescription := range prescriptions {
-			prescriptionData = append(prescriptionData, schemas.PrescriptionResponse{
+			prescriptionList = append(prescriptionList, schemas.PrescriptionResponse{
 				ID: prescription.ID,
 			})
+		}
+
+		// Ensure prescriptions is an empty array if none exist
+		if len(prescriptionList) == 0 {
+			prescriptionList = []schemas.PrescriptionResponse{}
 		}
 
 		// Create a VisitResponse object and populate necessary fields
@@ -102,10 +107,10 @@ func GetPatientVisitHistory(c *gin.Context) {
 			TreatmentPlan: visit.TreatmentPlan,
 			Notes:         visit.Notes,
 			VisitType:     visit.VisitType,
-			DoctorName:    visit.Doctor.FirstName + " " + visit.Doctor.LastName, // Fetch doctor's name
-			Prescriptions: prescriptionData,
 			AdmissionDate: &visit.AdmissionDate,
-			DischargeDate: visit.DischargeDate,
+			DischargeDate: visit.DischargeDate, // Added discharge date
+			DoctorName:    visit.Doctor.FirstName + " " + visit.Doctor.LastName,
+			Prescriptions: prescriptionList, // Ensures it always returns an array
 		}
 
 		// Sort into inpatient or outpatient visits
@@ -114,6 +119,14 @@ func GetPatientVisitHistory(c *gin.Context) {
 		} else if visit.VisitType == "OP" {
 			outpatientVisits = append(outpatientVisits, visitResponse)
 		}
+	}
+
+	// Ensure empty lists instead of null if no visits are found
+	if len(inpatientVisits) == 0 {
+		inpatientVisits = []schemas.VisitResponse{}
+	}
+	if len(outpatientVisits) == 0 {
+		outpatientVisits = []schemas.VisitResponse{}
 	}
 
 	// Send the formatted response
