@@ -104,6 +104,8 @@ func GetPatientVisitHistory(c *gin.Context) {
 			VisitType:     visit.VisitType,
 			DoctorName:    visit.Doctor.FirstName + " " + visit.Doctor.LastName, // Fetch doctor's name
 			Prescriptions: prescriptionData,
+			AdmissionDate: &visit.AdmissionDate,
+			DischargeDate: visit.DischargeDate,
 		}
 
 		// Sort into inpatient or outpatient visits
