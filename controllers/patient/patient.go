@@ -70,9 +70,9 @@ func GetPatientVisitHistory(c *gin.Context) {
 		return
 	}
 
-	// Prepare visit responses
-	var inpatientVisits []schemas.VisitResponse
-	var outpatientVisits []schemas.VisitResponse
+	// Prepare response lists
+	inpatientVisits := []schemas.VisitResponse{}
+	outpatientVisits := []schemas.VisitResponse{}
 
 	// Iterate through visits
 	for _, visit := range visits {
