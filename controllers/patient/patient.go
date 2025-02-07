@@ -128,17 +128,17 @@ func GetPatientVisitHistory(c *gin.Context) {
 }
 
 func CreatePrescription(c *gin.Context) {
-	var input schemas.PrescriptionInput
+	var input schemas.CreatePrescriptionInput
 	logger := loggers.InitializeLogger()
 
 	// Bind request body
 	if err := c.ShouldBindJSON(&input); err != nil {
-		logger.Error("Invalid request format for Create Prescription", "error", err.Error())
+		logger.Error("Error binding JSON for Create Prescription", "error", err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid request format", "status": "Error"})
 		return
 	}
 
-	// Validate Patient
+	// Validate patient
 	var patient models.Patient
 	if err := initializers.DB.First(&patient, input.PatientID).Error; err != nil {
 		logger.Warn("Patient not found", "patient_id", input.PatientID)
@@ -146,7 +146,7 @@ func CreatePrescription(c *gin.Context) {
 		return
 	}
 
-	// Validate Doctor
+	// Validate doctor
 	var doctor models.Employee
 	if err := initializers.DB.First(&doctor, input.DoctorID).Error; err != nil {
 		logger.Warn("Doctor not found", "doctor_id", input.DoctorID)
@@ -154,7 +154,7 @@ func CreatePrescription(c *gin.Context) {
 		return
 	}
 
-	// Validate Visit
+	// Validate visit
 	var visit models.Visit
 	if err := initializers.DB.First(&visit, input.VisitID).Error; err != nil {
 		logger.Warn("Visit not found", "visit_id", input.VisitID)
@@ -162,55 +162,43 @@ func CreatePrescription(c *gin.Context) {
 		return
 	}
 
-	// Convert DateIssued string to time.Time
-	dateIssued, err := time.Parse("2006-01-02", input.DateIssued)
-	if err != nil {
-		logger.Error("Invalid date format", "date_issued", input.DateIssued)
-		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid date format (YYYY-MM-DD)", "status": "Error"})
-		return
-	}
-
-	// Create Prescription
+	// Create prescription
 	prescription := models.Prescription{
 		VisitID:    input.VisitID,
 		VisitType:  input.VisitType,
 		PatientID:  input.PatientID,
 		DoctorID:   input.DoctorID,
-		DateIssued: dateIssued,
+		DateIssued: time.Now(),
 		Notes:      input.Notes,
 	}
 
-	// Save Prescription
 	if err := initializers.DB.Create(&prescription).Error; err != nil {
 		logger.Error("Failed to create prescription", "error", err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to create prescription", "status": "Error"})
 		return
 	}
 
-	// Insert Prescription Items
+	// Create prescription items
 	var prescriptionItems []models.PrescriptionItem
-	for _, item := range input.Items {
+	for _, item := range input.PrescriptionDetails {
 		prescriptionItems = append(prescriptionItems, models.PrescriptionItem{
-			PrescriptionID: prescription.ID,
-			MedicineID:     item.MedicineID,
-			Quantity:       item.Quantity,
-			Instructions:   item.Instructions,
+			PrescriptionID:      prescription.ID,
+			PrescriptionDetails: item,
 		})
 	}
 
-	// Save Prescription Items
 	if len(prescriptionItems) > 0 {
 		if err := initializers.DB.Create(&prescriptionItems).Error; err != nil {
-			logger.Error("Failed to save prescription items", "error", err.Error())
-			c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to save prescription items", "status": "Error"})
+			logger.Error("Failed to create prescription items", "error", err.Error())
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to create prescription items", "status": "Error"})
 			return
 		}
 	}
 
 	logger.Info("Prescription created successfully", "prescription_id", prescription.ID)
 	c.JSON(http.StatusOK, gin.H{
-		"data":    gin.H{"prescription_id": prescription.ID},
-		"message": "Prescription created successfully",
+		"data":    prescription.ID,
+		"message": "Successfully created prescription",
 		"status":  "Success",
 	})
 }
@@ -221,38 +209,32 @@ func GetPrescriptionDetails(c *gin.Context) {
 
 	// Validate prescription_id
 	if prescriptionID == "" {
-		logger.Error("Missing prescription_id in request")
-		c.JSON(http.StatusBadRequest, gin.H{"message": "Missing prescription ID", "status": "Error"})
+		logger.Error("Missing prescription_id in GetPrescriptionDetails")
+		c.JSON(http.StatusBadRequest, gin.H{"data": nil, "message": "Missing prescription_id", "status": "Error"})
 		return
 	}
 
-	// Fetch Prescription with related data
+	// Fetch prescription
 	var prescription models.Prescription
-	if err := initializers.DB.
-		Preload("Doctor").
-		Preload("PrescriptionItems.Medicine").
-		First(&prescription, prescriptionID).Error; err != nil {
-		logger.Error("Prescription not found", "prescription_id", prescriptionID)
-		c.JSON(http.StatusNotFound, gin.H{"message": "Prescription not found", "status": "Error"})
+	if err := initializers.DB.Preload("Doctor").Preload("PrescriptionItems").First(&prescription, prescriptionID).Error; err != nil {
+		logger.Error("Prescription not found", "prescription_id", prescriptionID, "error", err.Error())
+		c.JSON(http.StatusNotFound, gin.H{"data": nil, "message": "Prescription not found", "status": "Error"})
 		return
 	}
 
-	// Prepare Response
-	response := gin.H{
-		"prescription_id": prescription.ID,
-		"doctor_name":     prescription.Doctor.FirstName + " " + prescription.Doctor.LastName,
-		"date_issued":     prescription.DateIssued.Format("2006-01-02"),
-		"notes":           prescription.Notes,
-		"items":           []gin.H{},
+	// Extract prescription details
+	var prescriptionDetails []string
+	for _, item := range prescription.PrescriptionItems {
+		prescriptionDetails = append(prescriptionDetails, item.PrescriptionDetails)
 	}
 
-	// Add Prescription Items with Medicine Names
-	for _, item := range prescription.PrescriptionItems {
-		response["items"] = append(response["items"].([]gin.H), gin.H{
-			"medicine_name": item.Medicine.Name, // Fetching medicine name
-			"quantity":      item.Quantity,
-			"instructions":  item.Instructions,
-		})
+	// Response format
+	response := schemas.PrescriptionDetailsResponse{
+		ID:                prescription.ID,
+		DoctorName:        prescription.Doctor.FirstName + " " + prescription.Doctor.LastName,
+		DateIssued:        prescription.DateIssued,
+		Notes:             prescription.Notes,
+		PrescriptionItems: prescriptionDetails,
 	}
 
 	c.JSON(http.StatusOK, gin.H{

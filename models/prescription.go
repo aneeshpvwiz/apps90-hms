@@ -23,13 +23,10 @@ func (Prescription) TableName() string {
 
 // PrescriptionItem represents the medicines in a prescription
 type PrescriptionItem struct {
-	ID             uint         `json:"id" gorm:"primaryKey"`
-	PrescriptionID uint         `json:"prescription_id"`
-	Prescription   Prescription `json:"prescription" gorm:"foreignKey:PrescriptionID"`
-	MedicineID     uint         `json:"medicine_id"`
-	Medicine       Medicine     `json:"medicine" gorm:"foreignKey:MedicineID"`
-	Quantity       int          `json:"quantity"`
-	Instructions   string       `json:"instructions"`
+	ID                  uint         `json:"id" gorm:"primaryKey"`
+	PrescriptionID      uint         `json:"prescription_id"`
+	Prescription        Prescription `json:"prescription" gorm:"foreignKey:PrescriptionID"`
+	PrescriptionDetails string       `json:"prescription_details" gorm:"type:text"` // Added prescription details
 }
 
 func (PrescriptionItem) TableName() string {
