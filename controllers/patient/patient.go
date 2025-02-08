@@ -216,6 +216,50 @@ func CreatePrescription(c *gin.Context) {
 	})
 }
 
+func EditPrescription(c *gin.Context) {
+	var request schemas.EditPrescriptionRequest
+	logger := loggers.InitializeLogger()
+
+	// Bind request body
+	if err := c.ShouldBindJSON(&request); err != nil {
+		logger.Error("Invalid request payload for EditPrescription", "error", err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid request payload", "status": "Error"})
+		return
+	}
+
+	// Validate prescription_id
+	var prescription models.Prescription
+	if err := initializers.DB.Where("id = ?", request.PrescriptionID).First(&prescription).Error; err != nil {
+		logger.Error("Prescription not found", "prescription_id", request.PrescriptionID)
+		c.JSON(http.StatusNotFound, gin.H{"message": "Prescription not found", "status": "Error"})
+		return
+	}
+
+	// Delete existing prescription items
+	if err := initializers.DB.Where("prescription_id = ?", request.PrescriptionID).Delete(&models.PrescriptionItem{}).Error; err != nil {
+		logger.Error("Failed to delete existing prescription items", "prescription_id", request.PrescriptionID, "error", err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to update prescription", "status": "Error"})
+		return
+	}
+
+	// Insert new prescription items
+	for _, details := range request.PrescriptionItems {
+		newItem := models.PrescriptionItem{
+			PrescriptionID:      request.PrescriptionID,
+			PrescriptionDetails: details, // Store prescription details as text
+		}
+
+		if err := initializers.DB.Create(&newItem).Error; err != nil {
+			logger.Error("Failed to insert new prescription item", "prescription_id", request.PrescriptionID, "error", err.Error())
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to update prescription", "status": "Error"})
+			return
+		}
+	}
+
+	// Success response
+	c.JSON(http.StatusOK, gin.H{"message": "Prescription updated successfully", "status": "Success"})
+}
+
 func GetPrescriptionDetails(c *gin.Context) {
 	prescriptionID := c.Query("prescription_id")
 	logger := loggers.InitializeLogger()

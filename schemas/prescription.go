@@ -18,3 +18,13 @@ type PrescriptionDetailsResponse struct {
 	Notes             string    `json:"notes"`
 	PrescriptionItems []string  `json:"prescription_items"`
 }
+
+type EditPrescriptionRequest struct {
+	PrescriptionID    uint     `json:"prescription_id" binding:"required"`
+	PrescriptionItems []string `json:"prescription_items" binding:"required"`
+}
+
+type EditPrescriptionItem struct {
+	ID                  uint   `json:"id" binding:"required"` // Prescription item ID
+	PrescriptionDetails string `json:"prescription_details"`  // New prescription details
+}
