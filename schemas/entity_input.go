@@ -77,3 +77,14 @@ type VisitResponse struct {
 	DoctorName    string                 `json:"doctor_name"` // Added doctor name
 	Prescriptions []PrescriptionResponse `json:"prescriptions"`
 }
+
+type MedicineCategoryResponse struct {
+	ID        uint               `json:"id"`
+	Name      string             `json:"name"`
+	Medicines []MedicineResponse `json:"medicines"`
+}
+
+type MedicineResponse struct {
+	ID   uint   `json:"id"`
+	Name string `json:"name"`
+}

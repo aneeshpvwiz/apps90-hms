@@ -19,7 +19,6 @@ func EntityRoutes(r *gin.Engine) {
 		entity.POST("/appointment", appointmentControllers.CreateAppointment)
 		entity.GET("/appointment", appointmentControllers.GetAppointments)
 		entity.POST("/visit", appointmentControllers.CreateVisit)
-		entity.GET("/medicine-category", entityController.GetMedicineCategories)
 		entity.GET("/medicine", entityController.GetMedicines)
 
 	}
