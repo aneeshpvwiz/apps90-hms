@@ -88,3 +88,15 @@ type MedicineResponse struct {
 	ID   uint   `json:"id"`
 	Name string `json:"name"`
 }
+
+type MedicineCategoryRequest struct {
+	Name        string `json:"name" binding:"required"`
+	Description string `json:"description"`
+	EntityID    uint   `json:"entity_id" binding:"required"`
+}
+
+type MedicineRequest struct {
+	Name       string `json:"name" binding:"required"`
+	CategoryID uint   `json:"category_id" binding:"required"`
+	EntityID   uint   `json:"entity_id" binding:"required"`
+}
