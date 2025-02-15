@@ -7,7 +7,6 @@ import (
 	"apps90-hms/schemas"
 
 	"net/http"
-	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -79,7 +78,7 @@ func GetPatientVisitHistory(c *gin.Context) {
 		var prescriptions []models.Prescription
 
 		// Fetch only prescription IDs for the visit
-		if err := initializers.DB.Select("id").Where("visit_id = ?", visit.ID).
+		if err := initializers.DB.Select("id", "date_issued").Where("visit_id = ?", visit.ID).
 			Find(&prescriptions).Error; err != nil {
 			logger.Error("Error fetching prescriptions for visit", "visit_id", visit.ID, "error", err)
 			continue
@@ -89,7 +88,8 @@ func GetPatientVisitHistory(c *gin.Context) {
 		var prescriptionList []schemas.PrescriptionResponse
 		for _, prescription := range prescriptions {
 			prescriptionList = append(prescriptionList, schemas.PrescriptionResponse{
-				ID: prescription.ID,
+				ID:         prescription.ID,
+				DateIssued: prescription.DateIssued,
 			})
 		}
 
@@ -181,7 +181,7 @@ func CreatePrescription(c *gin.Context) {
 		VisitType:  input.VisitType,
 		PatientID:  input.PatientID,
 		DoctorID:   input.DoctorID,
-		DateIssued: time.Now(),
+		DateIssued: input.DateIssued,
 		Notes:      input.Notes,
 	}
 

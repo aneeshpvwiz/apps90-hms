@@ -61,7 +61,8 @@ type VisitInput struct {
 }
 
 type PrescriptionResponse struct {
-	ID uint `json:"id"` // Only returning prescription ID
+	ID         uint      `json:"id"`
+	DateIssued time.Time `json:"date_issued"`
 }
 
 type VisitResponse struct {
