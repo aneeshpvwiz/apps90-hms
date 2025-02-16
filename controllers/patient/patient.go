@@ -275,6 +275,7 @@ func GetPrescriptionDetails(c *gin.Context) {
 	var prescription models.Prescription
 	if err := initializers.DB.Preload("Doctor").Preload("PrescriptionItems").First(&prescription, prescriptionID).Error; err != nil {
 		logger.Error("Prescription not found", "prescription_id", prescriptionID, "error", err.Error())
+
 		// Return empty list if no prescription is found
 		c.JSON(http.StatusOK, gin.H{
 			"data":    []schemas.PrescriptionDetailsResponse{},
@@ -290,13 +291,18 @@ func GetPrescriptionDetails(c *gin.Context) {
 		prescriptionDetails = append(prescriptionDetails, item.PrescriptionDetails)
 	}
 
+	// Ensure prescription_items is always an array
+	if len(prescriptionDetails) == 0 {
+		prescriptionDetails = []string{}
+	}
+
 	// Response format
 	response := schemas.PrescriptionDetailsResponse{
 		ID:                prescription.ID,
 		DoctorName:        prescription.Doctor.FirstName + " " + prescription.Doctor.LastName,
 		DateIssued:        prescription.DateIssued,
 		Notes:             prescription.Notes,
-		PrescriptionItems: prescriptionDetails,
+		PrescriptionItems: prescriptionDetails, // Always an array
 	}
 
 	c.JSON(http.StatusOK, gin.H{
