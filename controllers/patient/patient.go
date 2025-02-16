@@ -275,7 +275,12 @@ func GetPrescriptionDetails(c *gin.Context) {
 	var prescription models.Prescription
 	if err := initializers.DB.Preload("Doctor").Preload("PrescriptionItems").First(&prescription, prescriptionID).Error; err != nil {
 		logger.Error("Prescription not found", "prescription_id", prescriptionID, "error", err.Error())
-		c.JSON(http.StatusNotFound, gin.H{"data": nil, "message": "Prescription not found", "status": "Error"})
+		// Return empty list if no prescription is found
+		c.JSON(http.StatusOK, gin.H{
+			"data":    []schemas.PrescriptionDetailsResponse{},
+			"message": "No prescription found",
+			"status":  "Success",
+		})
 		return
 	}
 
