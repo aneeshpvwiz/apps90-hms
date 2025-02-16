@@ -14,6 +14,9 @@ func InitRoutes() *gin.Engine {
 	//router.Use(middlewares.APIResponseMiddleware())
 	router.Use(middlewares.APIErrorMiddleware())
 
+	// Serve static images from the "assets/images" folder
+	router.Static("/images", "./assets/images")
+
 	// CORS Middleware
 	FrontendUrl := os.Getenv("FRONTEND_URL")
 	router.Use(cors.New(cors.Config{
