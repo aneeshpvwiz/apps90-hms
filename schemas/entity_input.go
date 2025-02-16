@@ -101,3 +101,13 @@ type MedicineRequest struct {
 	CategoryID uint   `json:"category_id" binding:"required"`
 	EntityID   uint   `json:"entity_id" binding:"required"`
 }
+
+type EditVisitRequest struct {
+	VisitID       uint       `json:"visit_id" binding:"required"`
+	RoomNumber    *string    `json:"room_number,omitempty"`
+	Diagnosis     *string    `json:"diagnosis,omitempty"`
+	TreatmentPlan *string    `json:"treatment_plan,omitempty"`
+	Notes         *string    `json:"notes,omitempty"`
+	AdmissionDate *time.Time `json:"admission_date,omitempty"`
+	DischargeDate *time.Time `json:"discharge_date,omitempty"`
+}
