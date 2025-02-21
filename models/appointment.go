@@ -14,6 +14,7 @@ type Appointment struct {
 	Employee        Employee          `json:"employee" gorm:"foreignKey:EmployeeID"`
 	EntityID        uint              `json:"entity_id"`
 	Entity          Entity            `json:"enity" gorm:"foreignKey:EntityID"`
+    IsActive        bool              `json:"is_active" gorm:"default:true"`
 	AuditFields     `gorm:"embedded"` // Embedding AuditFields
 }
 
@@ -38,6 +39,7 @@ type Visit struct {
 	Doctor        Employee          `json:"doctor" gorm:"foreignKey:DoctorID"`
 	Prescriptions []Prescription    `json:"prescriptions" gorm:"foreignKey:VisitID;references:ID"`
 	VisitType     string            `json:"visit_type" `
+	IsActive      bool              `json:"is_active" gorm:"default:true"`
 	AuditFields   `gorm:"embedded"` // Embedding AuditFields
 }
 

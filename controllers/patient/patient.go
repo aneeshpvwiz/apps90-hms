@@ -63,7 +63,7 @@ func GetPatientVisitHistory(c *gin.Context) {
 
 	// Fetch visits (both inpatient and outpatient)
 	var visits []models.Visit
-	if err := initializers.DB.Where("patient_id = ?", patientID).Preload("Doctor").Find(&visits).Error; err != nil {
+	if err := initializers.DB.Where("patient_id = ? AND is_active = ?", patientID, true).Preload("Doctor").Find(&visits).Error; err != nil {
 		logger.Error("Error fetching visits for patient", "patient_id", patientID, "error", err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"data": nil, "message": "Failed to fetch visit history", "status": "Error"})
 		return
@@ -78,7 +78,7 @@ func GetPatientVisitHistory(c *gin.Context) {
 		var prescriptions []models.Prescription
 
 		// Fetch only prescription IDs for the visit
-		if err := initializers.DB.Select("id", "date_issued").Where("visit_id = ?", visit.ID).
+		if err := initializers.DB.Select("id", "date_issued").Where("visit_id = ? AND is_active = ?", visit.ID, true).
 			Find(&prescriptions).Error; err != nil {
 			logger.Error("Error fetching prescriptions for visit", "visit_id", visit.ID, "error", err)
 			continue
@@ -229,24 +229,41 @@ func EditPrescription(c *gin.Context) {
 
 	// Validate prescription_id
 	var prescription models.Prescription
-	if err := initializers.DB.Where("id = ?", request.PrescriptionID).First(&prescription).Error; err != nil {
-		logger.Error("Prescription not found", "prescription_id", request.PrescriptionID)
-		c.JSON(http.StatusNotFound, gin.H{"message": "Prescription not found", "status": "Error"})
+	if err := initializers.DB.Where("id = ? AND is_active = ?", request.PrescriptionID, true).First(&prescription).Error; err != nil {
+		logger.Error("Prescription not found or inactive", "prescription_id", request.PrescriptionID)
+		c.JSON(http.StatusNotFound, gin.H{"message": "Prescription not found or inactive", "status": "Error"})
 		return
 	}
 
-	// Delete existing prescription items
-	if err := initializers.DB.Where("prescription_id = ?", request.PrescriptionID).Delete(&models.PrescriptionItem{}).Error; err != nil {
-		logger.Error("Failed to delete existing prescription items", "prescription_id", request.PrescriptionID, "error", err.Error())
+	// Soft Delete Handling: Check if user wants to deactivate/activate the prescription
+	if request.IsActive != nil {
+		if err := initializers.DB.Model(&prescription).Update("is_active", *request.IsActive).Error; err != nil {
+			logger.Error("Failed to update prescription is_active status", "prescription_id", request.PrescriptionID, "error", err.Error())
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to update prescription status", "status": "Error"})
+			return
+		}
+		message := "Prescription deactivated successfully"
+		if *request.IsActive {
+			message = "Prescription reactivated successfully"
+		}
+		c.JSON(http.StatusOK, gin.H{"message": message, "status": "Success"})
+		return
+	}
+
+	// Soft delete existing prescription items instead of hard deleting
+	if err := initializers.DB.Model(&models.PrescriptionItem{}).
+		Where("prescription_id = ?", uint(request.PrescriptionID)).
+		Update("is_active", false).Error; err != nil {
+		logger.Error("Failed to soft delete existing prescription items", "prescription_id", request.PrescriptionID, "error", err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to update prescription", "status": "Error"})
 		return
 	}
-
 	// Insert new prescription items
 	for _, details := range request.PrescriptionItems {
 		newItem := models.PrescriptionItem{
-			PrescriptionID:      request.PrescriptionID,
+			PrescriptionID:      uint(request.PrescriptionID),
 			PrescriptionDetails: details, // Store prescription details as text
+			IsActive:            true,    // Newly inserted items are active
 		}
 
 		if err := initializers.DB.Create(&newItem).Error; err != nil {

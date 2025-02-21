@@ -54,6 +54,7 @@ type Employee struct {
 	EmployeeCategoryID uint              `json:"employee_category_id"` // Foreign key to EmployeeCategory
 	EmployeeCategory   EmployeeCategory  `json:"employee_category" gorm:"foreignKey:EmployeeCategoryID"`
 	Patients           []Patient         `json:"patients" gorm:"foreignKey:DoctorID"` // List of patients assigned to this doctor
+	IsActive           bool               `json:"is_active" gorm:"default:true"` 
 	AuditFields        `gorm:"embedded"` // Embedding AuditFields
 }
 
@@ -78,6 +79,7 @@ type Patient struct {
 	Occupation    string            `json:"occupation" gorm:"default:null"`
 	DoctorID      uint              `json:"doctor_id"`                         // Foreign key to Employee (Doctor)
 	Doctor        Employee          `json:"doctor" gorm:"foreignKey:DoctorID"` // Reference to the doctor
+	IsActive      bool              `json:"is_active" gorm:"default:true"`
 	AuditFields   `gorm:"embedded"` // Embedding AuditFields
 }
 

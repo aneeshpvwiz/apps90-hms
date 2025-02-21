@@ -14,6 +14,7 @@ type Prescription struct {
 	DateIssued        time.Time          `json:"date_issued"`
 	Notes             string             `json:"notes"`
 	PrescriptionItems []PrescriptionItem `json:"items" gorm:"foreignKey:PrescriptionID"`
+	IsActive          bool               `json:"is_active" gorm:"default:true"`
 	AuditFields       `gorm:"embedded"`
 }
 
@@ -27,6 +28,7 @@ type PrescriptionItem struct {
 	PrescriptionID      uint         `json:"prescription_id"`
 	Prescription        Prescription `json:"prescription" gorm:"foreignKey:PrescriptionID"`
 	PrescriptionDetails string       `json:"prescription_details" gorm:"type:text"` // Added prescription details
+	IsActive            bool         `json:"is_active" gorm:"default:true"`         // ✅ Added this field
 }
 
 func (PrescriptionItem) TableName() string {
