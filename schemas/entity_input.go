@@ -24,6 +24,7 @@ type PatientInput struct {
 	MaritalStatus string `json:"marital_status"`
 	Occupation    string `json:"occupation"`
 	DoctorID      uint   `json:"doctor_id" binding:"required"`
+	IsActive      *bool  `json:"is_active,omitempty"`
 }
 
 type EmployeeInput struct {
@@ -110,4 +111,5 @@ type EditVisitRequest struct {
 	Notes         *string    `json:"notes,omitempty"`
 	AdmissionDate *time.Time `json:"admission_date,omitempty"`
 	DischargeDate *time.Time `json:"discharge_date,omitempty"`
+	IsActive      *bool      `json:"is_active,omitempty"`
 }

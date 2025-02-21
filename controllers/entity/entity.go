@@ -6,6 +6,7 @@ import (
 	"apps90-hms/loggers"
 	"apps90-hms/models"
 	"apps90-hms/schemas"
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -158,6 +159,82 @@ func AddPatient(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": patient})
 }
 
+func EditPatient(c *gin.Context) {
+	var patientInput schemas.PatientInput
+	logger := loggers.InitializeLogger()
+
+	// Get patient ID from URL
+	patientID := c.Param("id")
+
+	// Validate patient ID
+	id, err := strconv.Atoi(patientID)
+	if err != nil {
+		logger.Error("Invalid patient ID", "error", err.Error(), "patient_id", patientID)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid patient ID"})
+		return
+	}
+
+	// Bind JSON input
+	if err := c.ShouldBindJSON(&patientInput); err != nil {
+		logger.Error("Error binding JSON for Edit Patient", "error", err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request format"})
+		return
+	}
+
+	// Parse DateOfBirth
+	dateOfBirth, err := time.Parse("2006-01-02", patientInput.DateOfBirth)
+	if err != nil {
+		logger.Error("Error parsing DateOfBirth", "error", err.Error(), "date_of_birth", patientInput.DateOfBirth)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid DateOfBirth format"})
+		return
+	}
+
+	// Check if patient exists
+	var patient models.Patient
+	if err := initializers.DB.Where("id = ?", id).First(&patient).Error; err != nil {
+		logger.Warn("Patient not found", "patient_id", id)
+		c.JSON(http.StatusNotFound, gin.H{"error": "Patient not found"})
+		return
+	}
+
+	// Check if email already exists for another patient
+	var existingPatient models.Patient
+	if err := initializers.DB.Where("email = ? AND id != ?", patientInput.Email, id).First(&existingPatient).Error; err == nil {
+		logger.Warn("Email already exists for another patient", "email", patientInput.Email)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Email already exists for another patient"})
+		return
+	}
+
+	fmt.Printf("IsActive: %v\n", patientInput.IsActive)
+	// Soft delete logic
+	if patientInput.IsActive != nil {
+		patient.IsActive = *patientInput.IsActive
+	}
+
+	// Update patient details
+	patient.FirstName = patientInput.FirstName
+	patient.LastName = patientInput.LastName
+	patient.Gender = patientInput.Gender
+	patient.DateOfBirth = dateOfBirth
+	patient.ContactNumber = patientInput.ContactNumber
+	patient.Email = patientInput.Email
+	patient.Address = patientInput.Address
+	patient.EntityID = patientInput.EntityID
+	patient.MaritalStatus = patientInput.MaritalStatus
+	patient.Occupation = patientInput.Occupation
+	patient.DoctorID = patientInput.DoctorID
+
+	// Save updates
+	if err := initializers.DB.Save(&patient).Error; err != nil {
+		logger.Error("Failed to update patient", "error", err.Error(), "patient_id", patient.ID)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update patient"})
+		return
+	}
+
+	logger.Info("Patient updated successfully", "patient_id", patient.ID, "email", patient.Email)
+	c.JSON(http.StatusOK, gin.H{"message": "Patient updated successfully", "data": patient})
+}
+
 func GetEmployeeList(c *gin.Context) {
 	var employees []models.Employee
 	entityID := c.DefaultQuery("entity_id", "0")                      // Entity ID from query parameters
@@ -206,7 +283,7 @@ func GetPatientList(c *gin.Context) {
 	}
 
 	// Find patients assigned to the specified doctor
-	initializers.DB.Where("entity_id = ?", entityID).Find(&patients)
+	initializers.DB.Where("entity_id = ? AND is_active = ?", entityID, true).Find(&patients)
 
 	if len(patients) == 0 {
 		c.JSON(http.StatusOK, gin.H{"message": "No patients found for the given doctor"})
@@ -227,8 +304,8 @@ func GetPatientList(c *gin.Context) {
 			"address":        patient.Address,
 			"marital_status": patient.MaritalStatus,
 			"occupation":     patient.Occupation,
-
-			"doctor": patient.Doctor.FirstName + " " + patient.Doctor.LastName, // Doctor's name
+			"is_active":      patient.IsActive,
+			"doctor":         patient.Doctor.FirstName + " " + patient.Doctor.LastName, // Doctor's name
 		})
 	}
 

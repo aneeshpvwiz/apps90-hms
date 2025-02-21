@@ -7,6 +7,7 @@ type MedicineCategory struct {
 	EntityID    uint              `json:"entity_id"` // Foreign key to Entity
 	Entity      Entity            `json:"entity" gorm:"foreignKey:EntityID"`
 	Medicines   []Medicine        `json:"medicines" gorm:"foreignKey:CategoryID"`
+	IsActive    bool              `json:"is_active" gorm:"default:true"` 
 	AuditFields `gorm:"embedded"` // Embedding AuditFields
 }
 
@@ -24,6 +25,7 @@ type Medicine struct {
 	Description string            `json:"description"`
 	Price       float64           `json:"price"`
 	Stock       int               `json:"stock"`
+	IsActive    bool         `json:"is_active" gorm:"default:true"` 
 	AuditFields `gorm:"embedded"` // Embedding AuditFields
 }
 

@@ -92,7 +92,7 @@ func GetAppointments(c *gin.Context) {
 			c.JSON(http.StatusNotFound, gin.H{"message": "Entity not found", "status": "Failure"})
 			return
 		}
-		query = query.Where("entity_id = ?", entityID)
+		query = query.Where("entity_id = ? AND is_active = ?", entityID, true)
 	}
 
 	// Retrieve appointments from the database
@@ -233,7 +233,7 @@ func EditVisit(c *gin.Context) {
 		return
 	}
 
-	// Update visit details if fields are provided
+	// Prepare update fields
 	updates := map[string]interface{}{}
 	if req.RoomNumber != nil {
 		updates["room_number"] = *req.RoomNumber
@@ -252,6 +252,9 @@ func EditVisit(c *gin.Context) {
 	}
 	if req.DischargeDate != nil {
 		updates["discharge_date"] = *req.DischargeDate
+	}
+	if req.IsActive != nil {
+		updates["is_active"] = *req.IsActive
 	}
 
 	// Perform update
