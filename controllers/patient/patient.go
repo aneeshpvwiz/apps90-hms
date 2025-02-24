@@ -290,7 +290,7 @@ func GetPrescriptionDetails(c *gin.Context) {
 
 	// Fetch prescription
 	var prescription models.Prescription
-	if err := initializers.DB.Preload("Doctor").Preload("PrescriptionItems").First(&prescription, prescriptionID).Error; err != nil {
+	if err := initializers.DB.Preload("Doctor").Preload("PrescriptionItems", "is_active = ?", true).First(&prescription, prescriptionID).Error; err != nil {
 		logger.Error("Prescription not found", "prescription_id", prescriptionID, "error", err.Error())
 
 		// Return empty list if no prescription is found
