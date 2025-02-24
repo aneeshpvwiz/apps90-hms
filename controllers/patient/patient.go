@@ -250,6 +250,15 @@ func EditPrescription(c *gin.Context) {
 		return
 	}
 
+	// Update prescription note
+	if err := initializers.DB.Model(&models.Prescription{}).
+		Where("id = ?", uint(request.PrescriptionID)).
+		Update("notes", request.Notes).Error; err != nil {
+		logger.Error("Failed to update the prescription notes", "prescription_id", request.PrescriptionID, "error", err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to update prescription", "status": "Error"})
+		return
+	}
+
 	// Soft delete existing prescription items instead of hard deleting
 	if err := initializers.DB.Model(&models.PrescriptionItem{}).
 		Where("prescription_id = ?", uint(request.PrescriptionID)).
