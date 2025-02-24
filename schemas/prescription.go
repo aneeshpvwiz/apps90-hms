@@ -23,6 +23,7 @@ type PrescriptionDetailsResponse struct {
 type EditPrescriptionRequest struct {
 	PrescriptionID    int      `json:"prescription_id"`
 	PrescriptionItems []string `json:"prescription_items"`
+	Notes 			  string   `json:"notes"`
 	IsActive          *bool    `json:"is_active,omitempty"` // Pointer to allow nil values
 }
 
