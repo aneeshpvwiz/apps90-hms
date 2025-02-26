@@ -86,6 +86,8 @@ type Patient struct {
 	Occupation    string            `json:"occupation" gorm:"type:varchar(100);default:null"`
 	DoctorID      uint              `json:"doctor_id"`                         // Foreign key to Employee (Doctor)
 	Doctor        Employee          `json:"doctor" gorm:"foreignKey:DoctorID"` // Reference to the doctor
+	Photo         string 			 `json:"photo" gorm:"type:text"`
+	Notes         string 			 `json:"notes" gorm:"type:text"`
 	IsActive      bool              `json:"is_active" gorm:"default:true"`
 	AuditFields   `gorm:"embedded"` // Embedding AuditFields
 }
