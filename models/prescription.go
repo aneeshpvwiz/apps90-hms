@@ -28,7 +28,11 @@ type PrescriptionItem struct {
 	PrescriptionID      uint         `json:"prescription_id"`
 	Prescription        Prescription `json:"prescription" gorm:"foreignKey:PrescriptionID"`
 	PrescriptionDetails string       `json:"prescription_details" gorm:"type:text"` // Added prescription details
-	IsActive            bool         `json:"is_active" gorm:"default:true"`         // ✅ Added this field
+	MedicineID         uint       `json:"medicine_id"`
+	Medicine           Medicine   `gorm:"foreignKey:MedicineID"`
+	MedicineIntervals  string     `json:"medicine_intervals" gorm:"type:varchar(50)"`
+	IsActive            bool         `json:"is_active" gorm:"default:true"`
+	AuditFields       `gorm:"embedded"`
 }
 
 func (PrescriptionItem) TableName() string {
