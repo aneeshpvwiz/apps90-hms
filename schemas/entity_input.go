@@ -42,7 +42,8 @@ type EmployeeInput struct {
 
 // AppointmentInput represents the structure of appointment input in the request body.
 type AppointmentInput struct {
-	AppointmentTime time.Time `json:"appointment_time"`
+	StartTime time.Time `json:"start_time"`
+	EndTime time.Time `json:"end_time"`
 	Reason          string    `json:"reason"`
 	Notes           string    `json:"notes"`
 	PatientID       uint      `json:"patient_id"`

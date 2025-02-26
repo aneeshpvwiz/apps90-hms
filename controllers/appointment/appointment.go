@@ -53,7 +53,8 @@ func CreateAppointment(c *gin.Context) {
 
 	// Create the appointment
 	appointment := models.Appointment{
-		AppointmentTime: appointmentInput.AppointmentTime,
+		StartTime: appointmentInput.StartTime,
+		EndTime: appointmentInput.EndTime,
 		Reason:          appointmentInput.Reason,
 		Notes:           appointmentInput.Notes,
 		PatientID:       appointmentInput.PatientID,
@@ -113,7 +114,8 @@ func GetAppointments(c *gin.Context) {
 	for _, appointment := range appointments {
 		appointmentResponses = append(appointmentResponses, map[string]interface{}{
 			"appointment_id":    appointment.ID,
-			"appointment_time":  appointment.AppointmentTime,
+			"start_time":  		 appointment.StartTime,
+			"end_time":  		 appointment.EndTime,
 			"reason":            appointment.Reason,
 			"notes":             appointment.Notes,
 			"patient_firstname": appointment.Patient.FirstName,

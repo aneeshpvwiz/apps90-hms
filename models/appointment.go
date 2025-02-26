@@ -5,7 +5,8 @@ import "time"
 // Appointment represents an appointment between a patient and a doctor
 type Appointment struct {
 	ID              uint              `json:"id" gorm:"primaryKey"`
-	AppointmentTime time.Time         `json:"appointment_time"`
+	StartTime       time.Time         `json:"start_time"`
+	EndTime         time.Time         `json:"end_time"`
 	Reason          string            `json:"reason" gorm:"type:varchar(200)"`
 	Notes           string            `json:"notes"`
 	PatientID       uint              `json:"patient_id"`
