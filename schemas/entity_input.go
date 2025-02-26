@@ -35,7 +35,7 @@ type EmployeeInput struct {
 	LastName           string `json:"last_name" binding:"required"`
 	Email              string `json:"email" binding:"required,email"`
 	PhoneNumber        string `json:"phone_number" binding:"required"`
-	DateOfBirth        string `json:"date_of_birth" binding:"required"`
+	DateOfBirth        time.Time `json:"date_of_birth" binding:"required"`
 	EntityID           uint   `json:"entity_id" binding:"required"`
 	EmployeeCategoryID uint   `json:"employee_category_id" binding:"required"`
 }
@@ -104,8 +104,8 @@ type AddMedicineRequest struct {
 	CategoryID       uint            `json:"category_id" binding:"required"`
 	NameTranslations json.RawMessage `json:"name_translations" binding:"required"`
 	Description      string          `json:"description"`
-	Price           float64          `json:"price" binding:"required"`
-	Quantity        int              `json:"quantity" binding:"required"`
+	Price           float64          `json:"price"`
+	Quantity        string            `json:"quantity"`
 }
 
 type EditVisitRequest struct {

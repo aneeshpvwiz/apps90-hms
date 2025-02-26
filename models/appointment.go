@@ -6,7 +6,7 @@ import "time"
 type Appointment struct {
 	ID              uint              `json:"id" gorm:"primaryKey"`
 	AppointmentTime time.Time         `json:"appointment_time"`
-	Reason          string            `json:"reason"`
+	Reason          string            `json:"reason" gorm:"type:varchar(200)"`
 	Notes           string            `json:"notes"`
 	PatientID       uint              `json:"patient_id"`
 	Patient         Patient           `json:"patient" gorm:"foreignKey:PatientID"`
@@ -29,16 +29,16 @@ type Visit struct {
 	VisitDate     time.Time         `json:"visit_date"`
 	AdmissionDate time.Time         `json:"admission_date"`
 	DischargeDate *time.Time        `json:"discharge_date"` // Nullable for ongoing admissions
-	RoomNumber    string            `json:"room_number"`
-	Diagnosis     string            `json:"diagnosis"`
-	TreatmentPlan string            `json:"treatment_plan"`
-	Notes         string            `json:"notes"`
+	RoomNumber    string            `json:"room_number" gorm:"type:varchar(20)"`
+	Diagnosis     string            `json:"diagnosis" gorm:"type:varchar(200)"`
+	TreatmentPlan string            `json:"treatment_plan" gorm:"type:varchar(200)"`
+	Notes         string            `json:"notes" gorm:"type:varchar(200)"`
 	PatientID     uint              `json:"patient_id"`
 	Patient       Patient           `json:"patient" gorm:"foreignKey:PatientID"`
 	DoctorID      uint              `json:"doctor_id"`
 	Doctor        Employee          `json:"doctor" gorm:"foreignKey:DoctorID"`
 	Prescriptions []Prescription    `json:"prescriptions" gorm:"foreignKey:VisitID;references:ID"`
-	VisitType     string            `json:"visit_type" `
+	VisitType     string            `json:"visit_type" gorm:"type:varchar(20)"`
 	IsActive      bool              `json:"is_active" gorm:"default:true"`
 	AuditFields   `gorm:"embedded"` // Embedding AuditFields
 }

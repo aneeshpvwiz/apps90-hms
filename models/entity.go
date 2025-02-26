@@ -44,11 +44,18 @@ func (EmployeeCategory) TableName() string {
 
 type Employee struct {
 	ID                 uint              `json:"id" gorm:"primary_key"`
-	FirstName          string            `json:"first_name"`
-	LastName           string            `json:"last_name"`
-	Email              string            `json:"email" gorm:"unique"`
-	PhoneNumber        string            `json:"phone_number"`
-	DateOfBirth        string            `json:"date_of_birth"`
+	FirstName          string            `json:"first_name" gorm:"type:varchar(100)"`
+	LastName           string            `json:"last_name" gorm:"type:varchar(100)"`
+	Email    		   string    		 `json:"email" gorm:"type:varchar(200);unique"`
+	PhoneNumber        string            `json:"phone_number" gorm:"type:varchar(20)"`
+	DateOfBirth        time.Time          `json:"date_of_birth"`
+	Gender    		   string 			 `json:"gender" gorm:"type:varchar(10)"`
+	MaritalStatus      string 			 `json:"marital_status" gorm:"type:varchar(10)"`
+	Education          string 			 `json:"education" gorm:"type:varchar(100)"`
+	Experience         string 			 `json:"experience" gorm:"type:varchar(254)"`
+	Price              float64 			 `json:"price"`
+	Address   		   string            `json:"address" gorm:"type:text"`
+	Photo              string 			 `json:"photo" gorm:"type:text"`
 	EntityID           uint              `json:"entity_id"` // Foreign key to Entity
 	Entity             Entity            `json:"entity" gorm:"foreignKey:EntityID"`
 	EmployeeCategoryID uint              `json:"employee_category_id"` // Foreign key to EmployeeCategory
@@ -66,17 +73,17 @@ func (Employee) TableName() string {
 // Patient represents a patient in the hospital
 type Patient struct {
 	ID            uint              `json:"id" gorm:"primaryKey"`
-	FirstName     string            `json:"first_name"`
-	LastName      string            `json:"last_name"`
-	Gender        string            `json:"gender"`
+	FirstName     string            `json:"first_name" gorm:"type:varchar(100)"`
+	LastName      string            `json:"last_name" gorm:"type:varchar(100)"`
+	Gender        string            `json:"gender" gorm:"type:varchar(10)"`
 	DateOfBirth   time.Time         `json:"date_of_birth"`
-	ContactNumber string            `json:"contact_number"`
-	Email         string            `json:"email" gorm:"unique"`
+	ContactNumber string            `json:"contact_number" gorm:"type:varchar(20)"`
+	Email         string            `json:"email" gorm:"type:varchar(200);unique"`
 	Address       string            `json:"address" gorm:"type:text"`
 	EntityID      uint              `json:"entity_id"`
 	Entity        Entity            `json:"entity" gorm:"foreignKey:EntityID"`
-	MaritalStatus string            `json:"marital_status"`
-	Occupation    string            `json:"occupation" gorm:"default:null"`
+	MaritalStatus string            `json:"marital_status" gorm:"type:varchar(10)"`
+	Occupation    string            `json:"occupation" gorm:"type:varchar(100);default:null"`
 	DoctorID      uint              `json:"doctor_id"`                         // Foreign key to Employee (Doctor)
 	Doctor        Employee          `json:"doctor" gorm:"foreignKey:DoctorID"` // Reference to the doctor
 	IsActive      bool              `json:"is_active" gorm:"default:true"`
