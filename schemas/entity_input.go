@@ -1,6 +1,9 @@
 package schemas
 
-import "time"
+import (
+	"encoding/json"
+	"time"
+)
 
 type EntityInput struct {
 	Name    string `json:"name" binding:"required"`
@@ -91,16 +94,18 @@ type MedicineResponse struct {
 	Name string `json:"name"`
 }
 
-type MedicineCategoryRequest struct {
-	Name        string `json:"name" binding:"required"`
-	Description string `json:"description"`
+type AddMedicineCategoryRequest struct {
+	NameTranslations json.RawMessage `json:"name_translations" binding:"required"`
 	EntityID    uint   `json:"entity_id" binding:"required"`
 }
 
-type MedicineRequest struct {
-	Name       string `json:"name" binding:"required"`
-	CategoryID uint   `json:"category_id" binding:"required"`
-	EntityID   uint   `json:"entity_id" binding:"required"`
+type AddMedicineRequest struct {
+	EntityID         uint            `json:"entity_id" binding:"required"`
+	CategoryID       uint            `json:"category_id" binding:"required"`
+	NameTranslations json.RawMessage `json:"name_translations" binding:"required"`
+	Description      string          `json:"description"`
+	Price           float64          `json:"price" binding:"required"`
+	Quantity        int              `json:"quantity" binding:"required"`
 }
 
 type EditVisitRequest struct {
@@ -113,3 +118,4 @@ type EditVisitRequest struct {
 	DischargeDate *time.Time `json:"discharge_date,omitempty"`
 	IsActive      *bool      `json:"is_active,omitempty"`
 }
+

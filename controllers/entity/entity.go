@@ -359,25 +359,26 @@ func AddMedicineCategory(c *gin.Context) {
 	logger := loggers.InitializeLogger()
 
 	// Parse request body
-	var input schemas.MedicineCategoryRequest
+	var input schemas.AddMedicineCategoryRequest
 	if err := c.ShouldBindJSON(&input); err != nil {
 		logger.Error("Invalid input for medicine category", "error", err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid request format", "status": "Error"})
 		return
 	}
 
-	// Check if the category already exists for the given entity
+
+	// Check if category already exists for the same entity (Optional)
 	var existingCategory models.MedicineCategory
-	if err := initializers.DB.Where("name = ? AND entity_id = ?", input.Name, input.EntityID).First(&existingCategory).Error; err == nil {
-		logger.Warn("Medicine category already exists", "name", input.Name, "entity_id", input.EntityID)
-		c.JSON(http.StatusConflict, gin.H{"message": "Medicine category already exists", "status": "Error"})
+	if err := initializers.DB.Where("entity_id = ? AND name_translations @> ?", input.EntityID, input.NameTranslations).
+		First(&existingCategory).Error; err == nil {
+		logger.Warn("Duplicate category found")
+		c.JSON(http.StatusConflict, gin.H{"message": "Category already exists", "status": "Error"})
 		return
 	}
 
 	// Create new category
 	category := models.MedicineCategory{
-		Name:        input.Name,
-		Description: input.Description,
+		NameTranslations:        input.NameTranslations,
 		EntityID:    input.EntityID,
 	}
 
@@ -399,44 +400,49 @@ func AddMedicine(c *gin.Context) {
 	logger := loggers.InitializeLogger()
 
 	// Parse request body
-	var input schemas.MedicineRequest
+	var input schemas.AddMedicineRequest
 	if err := c.ShouldBindJSON(&input); err != nil {
 		logger.Error("Invalid input for medicine", "error", err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid request format", "status": "Error"})
 		return
 	}
 
-	// Check if the medicine already exists for the given entity and category
-	var existingMedicine models.Medicine
-	if err := initializers.DB.Where("name = ? AND entity_id = ? AND category_id = ?", input.Name, input.EntityID, input.CategoryID).
-		First(&existingMedicine).Error; err == nil {
-
-		logger.Info("Medicine already exists, returning existing ID", "medicine_id", existingMedicine.ID)
-		c.JSON(http.StatusOK, gin.H{
-			"data":    existingMedicine.ID,
-			"message": "Medicine already exists",
-			"status":  "Success",
-		})
+	// Validate if the category exists under the given entity
+	var category models.MedicineCategory
+	if err := initializers.DB.Where("id = ? AND entity_id = ?", input.CategoryID, input.EntityID).First(&category).Error; err != nil {
+		logger.Error("Invalid category ID for entity:", err)
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid category ID for the given entity", "status": "Error"})
 		return
 	}
 
-	// Create new medicine
-	medicine := models.Medicine{
-		Name:       input.Name,
-		EntityID:   input.EntityID,
-		CategoryID: input.CategoryID,
+	// Check if medicine already exists for the same category and entity (Optional)
+	var existingMedicine models.Medicine
+	if err := initializers.DB.Where("entity_id = ? AND category_id = ? AND name_translations @> ?", input.EntityID, input.CategoryID, input.NameTranslations).
+		First(&existingMedicine).Error; err == nil {
+		logger.Error("Duplicate medicine found")
+		c.JSON(http.StatusConflict, gin.H{"message": "Medicine already exists", "status": "Error"})
+		return
 	}
 
-	// Save to DB
-	if err := initializers.DB.Create(&medicine).Error; err != nil {
-		logger.Error("Failed to add medicine", "error", err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to add medicine", "status": "Error"})
+	// Create new medicine record
+	newMedicine := models.Medicine{
+		EntityID:         input.EntityID,
+		CategoryID:       input.CategoryID,
+		NameTranslations: input.NameTranslations,
+		Description:      input.Description,
+		Price:            input.Price,
+		Quantity:         input.Quantity,
+	}
+
+	if err := initializers.DB.Create(&newMedicine).Error; err != nil {
+		logger.Error("Failed to create medicine:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to create medicine", "status": "Error"})
 		return
 	}
 
 	// Return the newly created medicine ID
 	c.JSON(http.StatusOK, gin.H{
-		"data":    medicine.ID,
+		"data":    newMedicine.ID,
 		"message": "Successfully added medicine",
 		"status":  "Success",
 	})
