@@ -178,7 +178,6 @@ func CreateVisit(c *gin.Context) {
 		VisitDate:     input.VisitDate,
 		AdmissionDate: input.AdmissionDate,
 		DischargeDate: input.DischargeDate,
-		RoomNumber:    input.RoomNumber,
 		Diagnosis:     input.Diagnosis,
 		TreatmentPlan: input.TreatmentPlan,
 		Notes:         input.Notes,

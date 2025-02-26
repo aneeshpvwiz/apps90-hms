@@ -75,7 +75,6 @@ type VisitResponse struct {
 	VisitDate     time.Time              `json:"visit_date"`
 	AdmissionDate *time.Time             `json:"admission_date,omitempty"`
 	DischargeDate *time.Time             `json:"discharge_date,omitempty"`
-	RoomNumber    string                 `json:"room_number"`
 	Diagnosis     string                 `json:"diagnosis"`
 	TreatmentPlan string                 `json:"treatment_plan"`
 	Notes         string                 `json:"notes"`

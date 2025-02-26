@@ -102,7 +102,6 @@ func GetPatientVisitHistory(c *gin.Context) {
 		visitResponse := schemas.VisitResponse{
 			ID:            visit.ID,
 			VisitDate:     visit.VisitDate,
-			RoomNumber:    visit.RoomNumber,
 			Diagnosis:     visit.Diagnosis,
 			TreatmentPlan: visit.TreatmentPlan,
 			Notes:         visit.Notes,
